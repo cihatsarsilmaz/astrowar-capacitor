@@ -1,0 +1,37 @@
+# Bağımlılıklar
+node_modules/
+
+# Build çıktıları (CI'da yeniden oluşturulur)
+dist/
+www/
+
+# iOS (ileride eklenirse)
+ios/
+
+# Yerel geliştirme
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.suo *.ntvs* *.njsproj *.sln *.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Capacitor runtime
+.capacitor/
+
+# Android build çıktıları (kaynak değil, üretilen)
+android/app/build/
+android/.gradle/
+android/build/
+
+# Signing (ASLA git'e gönderme!)
+*.keystore
+*.jks
+release.keystore
+android/app/release.keystore
