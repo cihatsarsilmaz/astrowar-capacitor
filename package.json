@@ -1,7 +1,9 @@
 {
-  "name": "astrogamewar",
+  "name": "@cihatsarsilmaz/astrogamewar",
   "version": "1.0.0",
-  "private": true,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "type": "module",
   "scripts": {
     "dev":            "vite",
