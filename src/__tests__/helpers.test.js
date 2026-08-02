@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fmt, getRank, techMul, production, sc } from "../utils/helpers.js";
-import { RESEARCH_CATS, TECHS, UNITS } from "../data/gameData.js";
+import { fmt, getRank, techMul, RESEARCH_CATS, TECHS, UNITS } from "../AstrogameWAR.jsx";
 
 describe("Helpers", () => {
   describe("fmt()", () => {
@@ -16,20 +15,20 @@ describe("Helpers", () => {
   });
 
   describe("getRank()", () => {
-    it("returns Çaylak for XP 0", () => {
-      expect(getRank(0)).toBe("Çaylak");
+    it("returns rank for XP 0", () => {
+      expect(getRank(0)).toBeDefined();
     });
-    it("returns correct rank for high XP", () => {
-      expect(getRank(100000)).toBeDefined();
+    it("returns Çaylak for XP 0", () => {
+      expect(getRank(0).label).toBe("Çaylak");
     });
   });
 
   describe("techMul()", () => {
     it("returns 1.0 for level 0", () => {
-      expect(techMul(0)).toBe(1.0);
+      expect(techMul({}, "nonexistent")).toBe(1);
     });
-    it("returns higher value for level 5", () => {
-      expect(techMul(5)).toBeGreaterThan(1.0);
+    it("increases with level", () => {
+      expect(techMul({ weapons: 5 }, "atk")).toBeGreaterThan(1);
     });
   });
 });
