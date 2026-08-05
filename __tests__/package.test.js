@@ -103,4 +103,28 @@ describe("package.json", () => {
       expect(pkg.publishConfig.registry).toBe(registryUrlMatch[1]);
     });
   });
+
+  describe("regression and boundary checks", () => {
+    const pkg = JSON.parse(rawPackageJson);
+
+    it("no longer uses the old unscoped package name", () => {
+      expect(pkg.name).not.toBe("astrogamewar");
+    });
+
+    it("splits into exactly a scope and a package name segment", () => {
+      const segments = pkg.name.split("/");
+      expect(segments).toHaveLength(2);
+      expect(segments[0]).toBe("@cihatsarsilmaz");
+      expect(segments[1]).toBe("astrogamewar");
+    });
+
+    it("contains no uppercase characters or whitespace in the package name", () => {
+      expect(pkg.name).toBe(pkg.name.toLowerCase());
+      expect(pkg.name).not.toMatch(/\s/);
+    });
+
+    it("does not declare a second, conflicting registry under publishConfig", () => {
+      expect(Object.keys(pkg.publishConfig)).toEqual(["registry"]);
+    });
+  });
 });

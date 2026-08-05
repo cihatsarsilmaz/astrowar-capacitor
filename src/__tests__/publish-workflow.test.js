@@ -82,4 +82,25 @@ describe(".github/workflows/publish.yml", () => {
       expect(publishIdx).toBeGreaterThan(buildIdx);
     });
   });
+
+  describe("regression and boundary checks", () => {
+    it("defines exactly one job in the workflow", () => {
+      const jobMatches = workflow.match(/^\s{2}publish:\s*$/gm);
+      expect(jobMatches).toHaveLength(1);
+    });
+
+    it("declares NODE_AUTH_TOKEN exactly once, scoped to a single step", () => {
+      const matches = workflow.match(/NODE_AUTH_TOKEN/g);
+      expect(matches).toHaveLength(1);
+    });
+
+    it("does not request permissions beyond contents:read and packages:write", () => {
+      const permissionsBlock = workflow.slice(
+        workflow.indexOf("permissions:"),
+        workflow.indexOf("steps:"),
+      );
+      expect(permissionsBlock).not.toMatch(/contents:\s*write/);
+      expect(permissionsBlock).not.toMatch(/id-token:/);
+    });
+  });
 });

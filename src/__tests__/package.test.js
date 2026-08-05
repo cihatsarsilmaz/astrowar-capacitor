@@ -66,4 +66,21 @@ describe("package.json", () => {
     // this assertion documents that expectation explicitly.
     expect(pkg).toBeTypeOf("object");
   });
+
+  describe("regression and boundary checks", () => {
+    it("no longer uses the old unscoped package name", () => {
+      expect(pkg.name).not.toBe("astrogamewar");
+    });
+
+    it("splits into exactly a scope and a package name segment", () => {
+      const segments = pkg.name.split("/");
+      expect(segments).toHaveLength(2);
+      expect(segments[0]).toBe("@cihatsarsilmaz");
+      expect(segments[1]).toBe("astrogamewar");
+    });
+
+    it("does not declare a second, conflicting registry under publishConfig", () => {
+      expect(Object.keys(pkg.publishConfig)).toEqual(["registry"]);
+    });
+  });
 });

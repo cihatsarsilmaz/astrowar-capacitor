@@ -92,4 +92,31 @@ describe(".github/workflows/publish.yml", () => {
       }
     });
   });
+
+  describe("regression and boundary checks", () => {
+    it("defines exactly one job in the workflow", () => {
+      const jobMatches = raw.match(/^\s{2}publish:\s*$/gm);
+      expect(jobMatches).toHaveLength(1);
+    });
+
+    it("declares NODE_AUTH_TOKEN exactly once, not at the workflow or job level", () => {
+      const matches = raw.match(/NODE_AUTH_TOKEN/g);
+      expect(matches).toHaveLength(1);
+    });
+
+    it("does not request broader permissions than contents:read and packages:write", () => {
+      const permissionsBlock = raw.slice(
+        raw.indexOf("permissions:"),
+        raw.indexOf("steps:"),
+      );
+      expect(permissionsBlock).not.toMatch(/contents:\s*write/);
+      expect(permissionsBlock).not.toMatch(/id-token:/);
+      expect(permissionsBlock).not.toMatch(/actions:\s*write/);
+    });
+
+    it("does not publish with the --access flag or a dry-run", () => {
+      expect(raw).not.toMatch(/npm publish[^\n]*--access/);
+      expect(raw).not.toMatch(/npm publish[^\n]*--dry-run/);
+    });
+  });
 });
