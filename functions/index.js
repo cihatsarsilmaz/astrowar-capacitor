@@ -332,13 +332,18 @@ exports.battleResolve = onRequest(async (req, res) => {
   }
 
   // Validate fleet counts to prevent abuse (no more than 9999 of any unit)
-  for (const [type, count] of Object.entries(atkFleet)) {
-    if (!UNITS[type]) { res.status(400).json({ error: `Unknown unit type: ${type}` }); return; }
-    if (typeof count !== "number" || count < 0 || count > 9999) {
-      res.status(400).json({ error: `Invalid unit count for ${type}` });
-      return;
+  const validateFleet = (fleet, label) => {
+    for (const [type, count] of Object.entries(fleet)) {
+      if (!UNITS[type]) return `Unknown unit type in ${label}: ${type}`;
+      if (typeof count !== "number" || count < 0 || count > 9999)
+        return `Invalid unit count for ${type} in ${label}`;
     }
-  }
+    return null;
+  };
+  const atkErr = validateFleet(atkFleet, "atkFleet");
+  if (atkErr) { res.status(400).json({ error: atkErr }); return; }
+  const defErr = validateFleet(defFleet, "defFleet");
+  if (defErr) { res.status(400).json({ error: defErr }); return; }
 
   try {
     const result = battle(

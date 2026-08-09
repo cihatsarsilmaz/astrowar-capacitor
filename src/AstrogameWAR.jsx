@@ -117,10 +117,10 @@ async function callFunction(path, method="GET", body=undefined){
   return data;
 }
 
-const USE_FUNCTIONS = () => !!CLOUD_FUNCTIONS_BASE_URL;
+const USE_FUNCTIONS = !!CLOUD_FUNCTIONS_BASE_URL;
 
 async function firebaseSaveGame(uid, state){
-  if(USE_FUNCTIONS()){
+  if(USE_FUNCTIONS){
     await callFunction("/saveGame","POST",{ state });
     return;
   }
@@ -129,7 +129,7 @@ async function firebaseSaveGame(uid, state){
 }
 
 async function firebaseLoadGame(uid){
-  if(USE_FUNCTIONS()){
+  if(USE_FUNCTIONS){
     try{ const d = await callFunction("/loadGame"); return d.state||null; }catch(e){ return null; }
   }
   const fb = await loadFirebase(); if(!fb) return null;
@@ -138,7 +138,7 @@ async function firebaseLoadGame(uid){
 }
 
 async function firebaseFetchAllUsers(){
-  if(USE_FUNCTIONS()){
+  if(USE_FUNCTIONS){
     try{ const d = await callFunction("/leaderboard"); return d.players||[]; }catch(e){ return []; }
   }
   const fb = await loadFirebase(); if(!fb) return [];
@@ -158,7 +158,7 @@ async function firebaseAddPlaySeconds(uid, secs){
 
 // Resolves a battle via Cloud Function when available, falls back to local computation.
 async function resolveBattle(atkFleet, defFleet, tech, formation, upgrades, hero, heroes, artifacts, insuranceOn, localBattleFn){
-  if(USE_FUNCTIONS()){
+  if(USE_FUNCTIONS){
     try{
       return await callFunction("/battle/resolve","POST",{atkFleet,defFleet,tech,formation,upgrades,hero,heroes,artifacts,insuranceOn});
     }catch(e){
