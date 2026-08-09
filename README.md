@@ -110,3 +110,47 @@ git push origin v1.0.0
 | Firebase bağlanmıyor | Admin paneli (⚙) hangi alanın eksik olduğunu gösterir |
 | GitHub Actions başarısız | Actions loguna bak, genellikle Java/SDK hatası |
 | Telefona yüklenmiyor | Bilinmeyen kaynaklar iznini aç |
+
+---
+
+## Firebase Cloud Functions (REST/HTTP API)
+
+The `functions/` directory contains server-side REST endpoints for the game.
+Cloud Functions require the Firebase **Blaze (pay-as-you-go)** plan.
+
+### Endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET`  | `/leaderboard` | Public | Top players sorted by play time |
+| `GET`  | `/loadGame` | ****** | Load authenticated user's save |
+| `POST` | `/saveGame` | ****** | Save authenticated user's state |
+| `POST` | `/battle/resolve` | ****** | Server-side battle computation |
+
+### Deployment
+
+1. Install Firebase CLI: `npm install -g firebase-tools`
+2. Log in: `firebase login`
+3. Set your project: `firebase use YOUR_PROJECT_ID`
+4. Deploy: `firebase deploy --only functions`
+
+Functions deploy automatically on push to `main` via `deploy-functions.yml`
+if the `FIREBASE_TOKEN` repository secret is set:
+
+```bash
+# Generate token and add as GitHub secret
+firebase login:ci
+# → paste the token into: Settings → Secrets → FIREBASE_TOKEN
+```
+
+### Connecting the game client
+
+After deploying, set `CLOUD_FUNCTIONS_BASE_URL` in `src/AstrogameWAR.jsx`:
+
+```js
+const CLOUD_FUNCTIONS_BASE_URL = "https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net";
+```
+
+When set, `saveGame`, `loadGame`, and `leaderboard` calls are routed through
+the Cloud Functions instead of direct Firestore. Leave the value as `""` to
+keep using direct Firestore (no functions deployment required).

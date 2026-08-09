@@ -31,6 +31,11 @@ const FIREBASE_CONFIG = {
 };
 const ADMIN_UIDS = ["BURAYA_SENIN_ADMIN_UID_IN"];
 const RECAPTCHA_ENTERPRISE_SITE_KEY = "BURAYA_RECAPTCHA_ENTERPRISE_SITE_KEY";
+
+// Cloud Functions base URL — set to your project's functions URL after deploying.
+// Example: "https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net"
+// Leave as "" to fall back to direct Firestore access.
+const CLOUD_FUNCTIONS_BASE_URL = "";
 const APPCHECK_READY = RECAPTCHA_ENTERPRISE_SITE_KEY && !RECAPTCHA_ENTERPRISE_SITE_KEY.startsWith("BURAYA");
 const APPCHECK_DEBUG_TOKEN = "";
 
@@ -89,10 +94,80 @@ async function firebaseGoogleSignIn(){
   return profile;
 }
 async function firebaseSignOut(){ const fb = await loadFirebase(); if(fb) await fb.mods.auth.signOut(fb.auth); }
-async function firebaseSaveGame(uid, state){ const fb = await loadFirebase(); if(!fb) return; await fb.mods.fs.setDoc(fb.mods.fs.doc(fb.db,"saves",uid), { state: JSON.stringify(state), updatedAt: Date.now() }); }
-async function firebaseLoadGame(uid){ const fb = await loadFirebase(); if(!fb) return null; const snap = await fb.mods.fs.getDoc(fb.mods.fs.doc(fb.db,"saves",uid)); return snap.exists() ? JSON.parse(snap.data().state) : null; }
-async function firebaseFetchAllUsers(){ const fb = await loadFirebase(); if(!fb) return []; const snap = await fb.mods.fs.getDocs(fb.mods.fs.collection(fb.db,"users")); return snap.docs.map(d=>({uid:d.id,...d.data()})); }
-async function firebaseAddPlaySeconds(uid, secs){ const fb = await loadFirebase(); if(!fb) return; try{ const ref=fb.mods.fs.doc(fb.db,"users",uid); const snap=await fb.mods.fs.getDoc(ref); const cur=snap.exists()?(snap.data().totalPlaySeconds||0):0; await fb.mods.fs.setDoc(ref,{totalPlaySeconds:cur+secs},{merge:true}); }catch(e){} }
+
+// Returns the current user's Firebase ID token, or null if not signed in.
+async function getIdToken(){
+  const fb = await loadFirebase();
+  if(!fb) return null;
+  const u = fb.auth.currentUser;
+  if(!u) return null;
+  try{ return await u.getIdToken(); }catch(e){ return null; }
+}
+
+// Calls a Cloud Function endpoint with an ID token in the Authorization header.
+// Returns parsed JSON on success, or throws on HTTP/network error.
+async function callFunction(path, method="GET", body=undefined){
+  const token = await getIdToken();
+  const headers = { "Content-Type":"application/json" };
+  if(token) headers["Authorization"] = "Bearer " + token;
+  const opts = { method, headers, ...(body!==undefined ? { body: JSON.stringify(body) } : {}) };
+  const res = await fetch(`${CLOUD_FUNCTIONS_BASE_URL}${path}`, opts);
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+const USE_FUNCTIONS = !!CLOUD_FUNCTIONS_BASE_URL;
+
+async function firebaseSaveGame(uid, state){
+  if(USE_FUNCTIONS){
+    await callFunction("/saveGame","POST",{ state });
+    return;
+  }
+  const fb = await loadFirebase(); if(!fb) return;
+  await fb.mods.fs.setDoc(fb.mods.fs.doc(fb.db,"saves",uid), { state: JSON.stringify(state), updatedAt: Date.now() });
+}
+
+async function firebaseLoadGame(uid){
+  if(USE_FUNCTIONS){
+    try{ const d = await callFunction("/loadGame"); return d.state||null; }catch(e){ return null; }
+  }
+  const fb = await loadFirebase(); if(!fb) return null;
+  const snap = await fb.mods.fs.getDoc(fb.mods.fs.doc(fb.db,"saves",uid));
+  return snap.exists() ? JSON.parse(snap.data().state) : null;
+}
+
+async function firebaseFetchAllUsers(){
+  if(USE_FUNCTIONS){
+    try{ const d = await callFunction("/leaderboard"); return d.players||[]; }catch(e){ return []; }
+  }
+  const fb = await loadFirebase(); if(!fb) return [];
+  const snap = await fb.mods.fs.getDocs(fb.mods.fs.collection(fb.db,"users"));
+  return snap.docs.map(d=>({uid:d.id,...d.data()}));
+}
+
+async function firebaseAddPlaySeconds(uid, secs){
+  const fb = await loadFirebase(); if(!fb) return;
+  try{
+    const ref=fb.mods.fs.doc(fb.db,"users",uid);
+    const snap=await fb.mods.fs.getDoc(ref);
+    const cur=snap.exists()?(snap.data().totalPlaySeconds||0):0;
+    await fb.mods.fs.setDoc(ref,{totalPlaySeconds:cur+secs},{merge:true});
+  }catch(e){}
+}
+
+// Resolves a battle via Cloud Function when available, falls back to local computation.
+async function resolveBattle(atkFleet, defFleet, tech, formation, upgrades, hero, heroes, artifacts, insuranceOn, localBattleFn){
+  if(USE_FUNCTIONS){
+    try{
+      return await callFunction("/battle/resolve","POST",{atkFleet,defFleet,tech,formation,upgrades,hero,heroes,artifacts,insuranceOn});
+    }catch(e){
+      // fall through to local computation on error
+    }
+  }
+  return localBattleFn();
+}
+
 function getAppCheckStatus(){ return _appCheckStatus; }
 
 const SAVE_KEY = "astrogamewar_v9";
