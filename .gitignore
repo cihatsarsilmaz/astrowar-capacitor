@@ -35,3 +35,8 @@ android/build/
 *.jks
 release.keystore
 android/app/release.keystore
+
+# Firebase Functions
+functions/node_modules/
+.firebase/
+.firebaserc
