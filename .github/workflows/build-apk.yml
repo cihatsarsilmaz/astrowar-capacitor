@@ -120,6 +120,9 @@ jobs:
         run: npx cap sync android
 
       # ── 7. FAST DEBUG BUILD ──
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
       - name: Build Debug APK
         run: |
           cd android
@@ -140,6 +143,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew :app:assembleRelease             --parallel             --build-cache             --configure-on-demand             --no-daemon
         timeout-minutes: 10
 
