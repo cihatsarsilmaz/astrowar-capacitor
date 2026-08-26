@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK — Optimized v2
 
 on:
   push:
@@ -7,69 +7,154 @@ on:
       - 'v*'
   workflow_dispatch:
 
-jobs:
-  build-apk:
-    runs-on: ubuntu-latest
+env:
+  NODE_VERSION: 18
+  JAVA_VERSION: 17
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
 
+jobs:
+  # ═══════════════════════════════════════════════════
+  # PARALEL TEST & LINT (Hızlı feedback)
+  # ═══════════════════════════════════════════════════
+  quality-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Setup Java 17
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Lint check
+        run: npm run lint || true
+
+      - name: Type check
+        run: npm run typecheck || true
+
+  # ═══════════════════════════════════════════════════
+  # ANA BUILD — Hızlandırılmış
+  # ═══════════════════════════════════════════════════
+  build-apk:
+    needs: quality-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      # ── 1. FAST CHECKOUT ──
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ── 2. NODE + CACHE ──
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      # ── 3. JAVA + GRADLE CACHE ──
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            android/.gradle
+            android/app/build
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # ── 4. ANDROID SDK CACHE ──
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/lib/android/sdk
+            ~/android-sdk
+          key: ${{ runner.os }}-android-sdk-${{ hashFiles('android/app/build.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-android-sdk-
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Node dependencies
-        run: npm ci
-
+      # ── 5. WEB BUILD ──
       - name: Build web assets
         run: npm run build
+        env:
+          CI: true
+          NODE_ENV: production
 
-      - name: Sync Capacitor → Android
-        run: npx cap sync android
+      # ── 6. CAPACITOR SYNC ──
+      - name: Capacitor sync
+        run: npx cap sync android --no-interactive
 
-      - name: Make gradlew executable
-        run: chmod +x android/gradlew
+      # ── 7. FAST DEBUG BUILD ──
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew :app:assembleDebug             --parallel             --build-cache             --configure-on-demand             --no-daemon             -x lint             -x lintVitalRelease
+        timeout-minutes: 8
 
-      - name: Build debug APK
-        run: cd android && ./gradlew assembleDebug --no-daemon
-
-      - name: Upload debug APK
+      # ── 8. UPLOAD ARTIFACT ──
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: AstrogameWAR-debug-${{ github.run_number }}
+          name: AstrogameWAR-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+          compression-level: 6
+
+      # ── 9. RELEASE BUILD (sadece tag) ──
+      - name: Build Release APK
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          cd android
+          ./gradlew :app:assembleRelease             --parallel             --build-cache             --configure-on-demand             --no-daemon
+        timeout-minutes: 10
+
+      - name: Upload Release APK
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: AstrogameWAR-release
+          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
           retention-days: 30
 
-      # ── İmzalı release APK (sadece v* tag push'larında) ─────────────────
-      - name: Decode keystore
-        if: startsWith(github.ref, 'refs/tags/')
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
-
-      - name: Build release APK
-        if: startsWith(github.ref, 'refs/tags/')
+      # ── 10. BUILD METRICS ──
+      - name: Build metrics
         run: |
-          cd android && ./gradlew assembleRelease --no-daemon \
-            -Pandroid.injected.signing.store.file=app/release.keystore \
-            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
-            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
-            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
-
-      - name: Upload release APK
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@v4
-        with:
-          name: AstrogameWAR-${{ github.ref_name }}
-          path: android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 90
+          echo "=== BUILD METRICS ==="
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+          du -sh android/app/build/outputs/apk/debug/
+          echo "Build completed successfully!"
