@@ -117,7 +117,7 @@ jobs:
 
       # ── 6. CAPACITOR SYNC ──
       - name: Capacitor sync
-        run: npx cap sync android --no-interactive
+        run: npx cap sync android
 
       # ── 7. FAST DEBUG BUILD ──
       - name: Build Debug APK
