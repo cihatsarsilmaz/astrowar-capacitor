@@ -1,5 +1,161 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ASTROGAMEWAR v10 — ULTRA GÖRSEL EFEKTLER & ANIMASYONLAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const GLOBAL_STYLE = document.createElement("style");
+GLOBAL_STYLE.textContent = `
+/* ── ENTRANCE ANIMATIONS ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-50px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(50px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── GLOW & PULSE ── */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 8px rgba(56,189,248,0.3); }
+  50%      { box-shadow: 0 0 24px rgba(56,189,248,0.7), 0 0 48px rgba(56,189,248,0.3); }
+}
+@keyframes neonPulse {
+  0%, 100% { text-shadow: 0 0 4px rgba(56,189,248,0.5), 0 0 8px rgba(56,189,248,0.3); }
+  50%      { text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 16px rgba(56,189,248,0.5), 0 0 32px rgba(56,189,248,0.2); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes battleShake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-3px) rotate(-0.5deg); }
+  75%      { transform: translateX(3px) rotate(0.5deg); }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.3); }
+}
+@keyframes laserBeam {
+  0%   { width: 0; opacity: 1; }
+  50%  { width: 100%; opacity: 1; }
+  100% { width: 100%; opacity: 0; }
+}
+
+/* ── GLASSMORPHISM ── */
+.glass {
+  background: rgba(5, 15, 28, 0.75) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.12) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+.glass-accent {
+  background: linear-gradient(135deg, rgba(56,189,248,0.1), rgba(168,85,247,0.05)) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
+
+/* ── BUTTON GLOW ── */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+.btn-glow:hover::before {
+  width: 300px; height: 300px;
+}
+.btn-glow:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(56,189,248,0.35) !important;
+}
+.btn-glow:active {
+  transform: translateY(0) scale(0.97) !important;
+}
+
+/* ── CARD HOVER ── */
+.card-hover {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.card-hover:hover {
+  transform: translateY(-3px) scale(1.01) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(56,189,248,0.1) !important;
+}
+
+/* ── PROGRESS SHIMMER ── */
+.progress-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.progress-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── STAGGER ANIMATIONS ── */
+.anim-fadeInUp    { animation: fadeInUp 0.5s ease-out forwards; opacity: 0; }
+.anim-fadeInScale { animation: fadeInScale 0.4s ease-out forwards; opacity: 0; }
+.anim-slideLeft   { animation: slideInLeft 0.5s ease-out forwards; opacity: 0; }
+.anim-slideRight  { animation: slideInRight 0.5s ease-out forwards; opacity: 0; }
+.anim-pulse       { animation: pulseGlow 2s ease-in-out infinite; }
+.anim-neon        { animation: neonPulse 2s ease-in-out infinite; }
+.anim-float       { animation: float 3s ease-in-out infinite; }
+.anim-shake       { animation: battleShake 0.3s ease-in-out; }
+.anim-spin        { animation: spinSlow 10s linear infinite; }
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.20s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.25); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.5); }
+`;
+document.head.appendChild(GLOBAL_STYLE);
+
+
+
 // AstrogameWAR v9.1 — GERÇEK İSİMLER · BÖLÜMSEL MENÜ · MASTER GÖZ · TEMİZ KOD
 //
 // ═══════════════════════ İÇİNDEKİLER (Ctrl+F ile ara) ═══════════════════════
@@ -31,11 +187,6 @@ const FIREBASE_CONFIG = {
 };
 const ADMIN_UIDS = ["BURAYA_SENIN_ADMIN_UID_IN"];
 const RECAPTCHA_ENTERPRISE_SITE_KEY = "BURAYA_RECAPTCHA_ENTERPRISE_SITE_KEY";
-
-// Cloud Functions base URL — set to your project's functions URL after deploying.
-// Example: "https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net"
-// Leave as "" to fall back to direct Firestore access.
-const CLOUD_FUNCTIONS_BASE_URL = "";
 const APPCHECK_READY = RECAPTCHA_ENTERPRISE_SITE_KEY && !RECAPTCHA_ENTERPRISE_SITE_KEY.startsWith("BURAYA");
 const APPCHECK_DEBUG_TOKEN = "";
 
@@ -94,80 +245,10 @@ async function firebaseGoogleSignIn(){
   return profile;
 }
 async function firebaseSignOut(){ const fb = await loadFirebase(); if(fb) await fb.mods.auth.signOut(fb.auth); }
-
-// Returns the current user's Firebase ID token, or null if not signed in.
-async function getIdToken(){
-  const fb = await loadFirebase();
-  if(!fb) return null;
-  const u = fb.auth.currentUser;
-  if(!u) return null;
-  try{ return await u.getIdToken(); }catch(e){ return null; }
-}
-
-// Calls a Cloud Function endpoint with an ID token in the Authorization header.
-// Returns parsed JSON on success, or throws on HTTP/network error.
-async function callFunction(path, method="GET", body=undefined){
-  const token = await getIdToken();
-  const headers = { "Content-Type":"application/json" };
-  if(token) headers["Authorization"] = "Bearer " + token;
-  const opts = { method, headers, ...(body!==undefined ? { body: JSON.stringify(body) } : {}) };
-  const res = await fetch(`${CLOUD_FUNCTIONS_BASE_URL}${path}`, opts);
-  const data = await res.json();
-  if(!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-  return data;
-}
-
-const USE_FUNCTIONS = !!CLOUD_FUNCTIONS_BASE_URL;
-
-async function firebaseSaveGame(uid, state){
-  if(USE_FUNCTIONS){
-    await callFunction("/saveGame","POST",{ state });
-    return;
-  }
-  const fb = await loadFirebase(); if(!fb) return;
-  await fb.mods.fs.setDoc(fb.mods.fs.doc(fb.db,"saves",uid), { state: JSON.stringify(state), updatedAt: Date.now() });
-}
-
-async function firebaseLoadGame(uid){
-  if(USE_FUNCTIONS){
-    try{ const d = await callFunction("/loadGame"); return d.state||null; }catch(e){ return null; }
-  }
-  const fb = await loadFirebase(); if(!fb) return null;
-  const snap = await fb.mods.fs.getDoc(fb.mods.fs.doc(fb.db,"saves",uid));
-  return snap.exists() ? JSON.parse(snap.data().state) : null;
-}
-
-async function firebaseFetchAllUsers(){
-  if(USE_FUNCTIONS){
-    try{ const d = await callFunction("/leaderboard"); return d.players||[]; }catch(e){ return []; }
-  }
-  const fb = await loadFirebase(); if(!fb) return [];
-  const snap = await fb.mods.fs.getDocs(fb.mods.fs.collection(fb.db,"users"));
-  return snap.docs.map(d=>({uid:d.id,...d.data()}));
-}
-
-async function firebaseAddPlaySeconds(uid, secs){
-  const fb = await loadFirebase(); if(!fb) return;
-  try{
-    const ref=fb.mods.fs.doc(fb.db,"users",uid);
-    const snap=await fb.mods.fs.getDoc(ref);
-    const cur=snap.exists()?(snap.data().totalPlaySeconds||0):0;
-    await fb.mods.fs.setDoc(ref,{totalPlaySeconds:cur+secs},{merge:true});
-  }catch(e){}
-}
-
-// Resolves a battle via Cloud Function when available, falls back to local computation.
-async function resolveBattle(atkFleet, defFleet, tech, formation, upgrades, hero, heroes, artifacts, insuranceOn, localBattleFn){
-  if(USE_FUNCTIONS){
-    try{
-      return await callFunction("/battle/resolve","POST",{atkFleet,defFleet,tech,formation,upgrades,hero,heroes,artifacts,insuranceOn});
-    }catch(e){
-      // fall through to local computation on error
-    }
-  }
-  return localBattleFn();
-}
-
+async function firebaseSaveGame(uid, state){ const fb = await loadFirebase(); if(!fb) return; await fb.mods.fs.setDoc(fb.mods.fs.doc(fb.db,"saves",uid), { state: JSON.stringify(state), updatedAt: Date.now() }); }
+async function firebaseLoadGame(uid){ const fb = await loadFirebase(); if(!fb) return null; const snap = await fb.mods.fs.getDoc(fb.mods.fs.doc(fb.db,"saves",uid)); return snap.exists() ? JSON.parse(snap.data().state) : null; }
+async function firebaseFetchAllUsers(){ const fb = await loadFirebase(); if(!fb) return []; const snap = await fb.mods.fs.getDocs(fb.mods.fs.collection(fb.db,"users")); return snap.docs.map(d=>({uid:d.id,...d.data()})); }
+async function firebaseAddPlaySeconds(uid, secs){ const fb = await loadFirebase(); if(!fb) return; try{ const ref=fb.mods.fs.doc(fb.db,"users",uid); const snap=await fb.mods.fs.getDoc(ref); const cur=snap.exists()?(snap.data().totalPlaySeconds||0):0; await fb.mods.fs.setDoc(ref,{totalPlaySeconds:cur+secs},{merge:true}); }catch(e){} }
 function getAppCheckStatus(){ return _appCheckStatus; }
 
 const SAVE_KEY = "astrogamewar_v9";
@@ -499,7 +580,39 @@ const init0 = () => ({
 const seedStarterFleet = s => ({...s, fleet:{...s.fleet, lightFighter:5, smallCargo:2}});
 
 // ═══════════════════════════ §6 STİL SİSTEMİ ════════════════════════════════
-const T={bg:"#020810",bgC:"#050f1c",bgP:"#06121e",br:"#0d1e30",brH:"#1a3a5c",pri:"#ddeeff",sec:"#4a6a8a",acc:"#38bdf8"};
+const T={
+  bg:"#020810",bgC:"#050f1c",bgP:"#06121e",br:"#0d1e30",brH:"#1a3a5c",
+  pri:"#ddeeff",sec:"#4a6a8a",acc:"#38bdf8",
+
+  // ── v10 NEON & GLOW COLORS ──
+  neonBlue:   "#00a8ff", neonGreen:  "#00ff88", neonPurple: "#a855f7",
+  neonPink:   "#ec4899", neonAmber:  "#ffaa00", neonRed:    "#ff4466",
+  neonGold:   "#ffd700",
+
+  // ── GRADIENTS ──
+  gradPrimary: "linear-gradient(135deg, #38bdf8, #00ff88)",
+  gradDanger:  "linear-gradient(135deg, #ff4466, #ffaa00)",
+  gradGold:    "linear-gradient(135deg, #ffd700, #ffaa00)",
+  gradPurple:  "linear-gradient(135deg, #a855f7, #ec4899)",
+  gradDark:    "linear-gradient(180deg, #050f1c, #020810)",
+
+  // ── GLOW SHADOWS ──
+  glowBlue:   "0 0 20px rgba(56,189,248,0.3)",
+  glowGreen:  "0 0 20px rgba(0,255,136,0.3)",
+  glowRed:    "0 0 20px rgba(255,68,102,0.3)",
+  glowGold:   "0 0 20px rgba(255,215,0,0.3)",
+  glowPurple: "0 0 20px rgba(168,85,247,0.3)",
+
+  // ── RARITY COLORS ──
+  rarity: {
+    common:    { color: "#8899aa", glow: "none", border: "rgba(136,153,170,0.3)" },
+    uncommon:  { color: "#00ff88", glow: "0 0 8px rgba(0,255,136,0.3)", border: "rgba(0,255,136,0.3)" },
+    rare:      { color: "#38bdf8", glow: "0 0 12px rgba(56,189,248,0.4)", border: "rgba(56,189,248,0.4)" },
+    epic:      { color: "#a855f7", glow: "0 0 16px rgba(168,85,247,0.5)", border: "rgba(168,85,247,0.5)" },
+    legendary: { color: "#ffd700", glow: "0 0 20px rgba(255,215,0,0.6)", border: "rgba(255,215,0,0.6)" },
+    mythic:    { color: "#ff4466", glow: "0 0 24px rgba(255,68,102,0.6)", border: "rgba(255,68,102,0.6)" },
+  },
+};
 
 // ── ORTAK STİL SABİTLERİ (S) ─────────────────────────────────────────────────
 // Sık tekrarlanan inline style objelerini burada sabitleyip referansla
@@ -730,7 +843,7 @@ export default function AstrogameWAR(){
   // baştan başlamasına yol açıyordu. Tek döngüde bu sorun da ortadan kalkar.
   useEffect(()=>{
     let sessionAccum = 0; // 2sn'lik tikleri biriktirip 30sn'de bir tetikler
-const id=setInterval(()=>{; _intervalIds.current.push(id);
+    const id=setInterval(()=>{
       setGs(prev=>{
         const secs=(Date.now()-prev.lastTick)/1000;
         const p=production(prev.buildings,prev.planets,prev.activeHero,prev.artifacts,prev.tech);
@@ -760,7 +873,7 @@ const id=setInterval(()=>{; _intervalIds.current.push(id);
   },[gs.totalPlaySeconds]);
 
   useEffect(()=>{
-const id=setInterval(()=>{; _intervalIds.current.push(id);
+    const id=setInterval(()=>{
       setGs(prev=>{
         if(!prev.techQ.length)return prev;
         const[first,...rest]=prev.techQ;
@@ -803,7 +916,7 @@ const id=setInterval(()=>{; _intervalIds.current.push(id);
 
   useEffect(()=>{
     if(!gs.autoBattle||battling)return;
-    const id=setInterval(()=>{ if(gs.autoBattle&&!bRef.current&&totalShips>0)launchBattle(); },12000); _intervalIds.current.push(id);
+    const id=setInterval(()=>{ if(gs.autoBattle&&!bRef.current&&totalShips>0)launchBattle(); },12000);
     return()=>clearInterval(id);
   },[gs.autoBattle,battling,totalShips]);
 
@@ -875,7 +988,7 @@ const id=setInterval(()=>{; _intervalIds.current.push(id);
     if(adWatching||adCooldown>0||adLimitReached)return;
     setAdWatching(true);setAdPct(0);
     const dur=4000,start=Date.now();
-const tick=setInterval(()=>{; _intervalIds.current.push(tick);
+    const tick=setInterval(()=>{
       const e=Date.now()-start,pct=Math.min(e/dur,1);
       setAdPct(pct);
       if(pct>=1){
@@ -896,7 +1009,7 @@ const tick=setInterval(()=>{; _intervalIds.current.push(tick);
   };
   useEffect(()=>{
     if(adCooldown<=0)return;
-    const id=setInterval(()=>setAdCooldown(c=>Math.max(0,c-1000)),1000); _intervalIds.current.push(id);
+    const id=setInterval(()=>setAdCooldown(c=>Math.max(0,c-1000)),1000);
     return()=>clearInterval(id);
   },[adCooldown>0]);
 
@@ -1040,7 +1153,7 @@ const tick=setInterval(()=>{; _intervalIds.current.push(tick);
     bRef.current=true;setBattle(true);setBPct(0);setReport(null);setReplay(false);
     const enemy=ENEMIES[selEnemy];
     const dur=4000,start=Date.now();
-const tick=setInterval(()=>{; _intervalIds.current.push(tick);
+    const tick=setInterval(()=>{
       if(!bRef.current){clearInterval(tick);return;}
       const e=Date.now()-start,pct=Math.min(e/dur,1);
       setBPct(pct);setBSec(Math.max(0,Math.ceil((dur-e)/1000)));
@@ -1076,7 +1189,7 @@ const tick=setInterval(()=>{; _intervalIds.current.push(tick);
     if(stats.wins<raid.req){notify(`${raid.req} zafer gerekli!`,false);return;}
     setRaidRun(true);setRaidPct(0);setRaidResult(null);
     const dur=6000,start=Date.now();
-const tick=setInterval(()=>{; _intervalIds.current.push(tick);
+    const tick=setInterval(()=>{
       const e=Date.now()-start,pct=Math.min(e/dur,1);
       setRaidPct(pct);
       if(pct>=1){
@@ -1131,10 +1244,6 @@ const tick=setInterval(()=>{; _intervalIds.current.push(tick);
     admin:{label:"Admin Paneli",icon:"⚙"},
   };
   const [activeGroup,setActiveGroup]=useState("empire");
-  const _intervalIds = useRef([]); // [CLEANUP] Tüm interval ID'leri
-  useEffect(()=>{ // [CLEANUP] Component unmount'ta temizle
-    return ()=>{ _intervalIds.current.forEach(clearInterval); _intervalIds.current=[]; };
-  },[]);
 
   // Güvenli sekme geçişi: tab'ı ayarlarken o tab'ın ait olduğu grubu da
   // otomatik bulup activeGroup'u senkron tutar. Programatik setTab() çağrıları
