@@ -7,15 +7,15 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
-  NODE_VERSION: 18
-  JAVA_VERSION: 17
+  NODE_VERSION: '20'
+  JAVA_VERSION: '17'
   GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
 
 jobs:
-  # ═══════════════════════════════════════════════════
-  # PARALEL TEST & LINT (Hızlı feedback)
-  # ═══════════════════════════════════════════════════
   quality-check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -40,22 +40,17 @@ jobs:
       - name: Type check
         run: npm run typecheck || true
 
-  # ═══════════════════════════════════════════════════
-  # ANA BUILD — Hızlandırılmış
-  # ═══════════════════════════════════════════════════
   build-apk:
     needs: quality-check
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
 
     steps:
-      # ── 1. FAST CHECKOUT ──
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      # ── 2. NODE + CACHE ──
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -75,7 +70,6 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
 
-      # ── 3. JAVA + GRADLE CACHE ──
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -94,7 +88,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # ── 4. ANDROID SDK CACHE ──
       - name: Cache Android SDK
         uses: actions/cache@v4
         with:
@@ -108,57 +101,95 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # ── 5. WEB BUILD ──
       - name: Build web assets
         run: npm run build
         env:
           CI: true
           NODE_ENV: production
 
-      # ── 6. CAPACITOR SYNC ──
       - name: Capacitor sync
         run: npx cap sync android
 
-      # ── 7. FAST DEBUG BUILD ──
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
       - name: Build Debug APK
         run: |
           cd android
-          ./gradlew :app:assembleDebug             --parallel             --build-cache             --configure-on-demand             --no-daemon             -x lint             -x lintVitalRelease
+          ./gradlew :app:assembleDebug --parallel --build-cache --configure-on-demand --no-daemon -x lint -x lintVitalRelease
         timeout-minutes: 8
 
-      # ── 8. UPLOAD ARTIFACT ──
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew :app:assembleRelease --parallel --build-cache --configure-on-demand --no-daemon
+        timeout-minutes: 10
+        continue-on-error: true
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: AstrogameWAR-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 7
-          compression-level: 6
-
-      # ── 9. RELEASE BUILD (sadece tag) ──
-      - name: Build Release APK
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew :app:assembleRelease             --parallel             --build-cache             --configure-on-demand             --no-daemon
-        timeout-minutes: 10
+          retention-days: 30
+          if-no-files-found: error
 
       - name: Upload Release APK
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: AstrogameWAR-release
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          path: |
+            android/app/build/outputs/apk/release/app-release-unsigned.apk
+            android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
+          if-no-files-found: warn
 
-      # ── 10. BUILD METRICS ──
+      - name: Delete existing latest-debug release (if any)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release delete latest-debug --yes --cleanup-tag || true
+        continue-on-error: true
+
+      - name: Delete existing latest-release release (if any)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release delete latest-release --yes --cleanup-tag || true
+        continue-on-error: true
+
+      - name: Create latest-debug GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create latest-debug \
+            --title "AstrogameWAR Latest Debug Build" \
+            --notes "Automated debug APK from \`main\`.\n\n**Commit:** \`${{ github.sha }}\`\n**Built at:** $(date -u '+%Y-%m-%d %H:%M UTC')" \
+            --target ${{ github.sha }} \
+            android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Create latest-release GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REL=""
+          if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
+            REL=android/app/build/outputs/apk/release/app-release.apk
+          elif [ -f android/app/build/outputs/apk/release/app-release-unsigned.apk ]; then
+            REL=android/app/build/outputs/apk/release/app-release-unsigned.apk
+          fi
+          if [ -n "$REL" ]; then
+            gh release create latest-release \
+              --title "AstrogameWAR Latest Release Build" \
+              --notes "Automated release APK from \`main\` (unsigned unless signing is configured).\n\n**Commit:** \`${{ github.sha }}\`\n**Built at:** $(date -u '+%Y-%m-%d %H:%M UTC')" \
+              --target ${{ github.sha }} \
+              "$REL"
+          else
+            echo "Release APK not found; skipping latest-release."
+          fi
+        continue-on-error: true
+
       - name: Build metrics
         run: |
           echo "=== BUILD METRICS ==="
-          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
-          du -sh android/app/build/outputs/apk/debug/
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk || true
+          ls -lh android/app/build/outputs/apk/release/* || true
           echo "Build completed successfully!"
