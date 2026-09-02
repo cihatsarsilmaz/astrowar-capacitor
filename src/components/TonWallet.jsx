@@ -5,38 +5,43 @@ import {
   formatTon,
 } from "../utils/tonWallet";
 
-export default function TonWallet({ balance = 0, onDeposit }) {
+export default function TonWallet({ balance = 0 }) {
   const [treasury, setTreasury] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState("");
+  const [amount, setAmount] = useState("10");
 
   useEffect(() => {
     let alive = true;
-    getTreasuryBalance().then((b) => {
-      if (alive) setTreasury(b);
-    });
-    const t = setInterval(() => {
-      getTreasuryBalance().then((b) => {
-        if (alive) setTreasury(b);
-      });
-    }, 30000);
+    const load = () => getTreasuryBalance().then((b) => { if (alive) setTreasury(b); });
+    load();
+    const t = setInterval(load, 30000);
     return () => {
       alive = false;
       clearInterval(t);
     };
   }, []);
 
-  const copy = async () => {
+  const copyAddr = async () => {
     try {
       await navigator.clipboard.writeText(TREASURY_ADDRESS);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setCopied("adres");
+      setTimeout(() => setCopied(""), 1500);
+    } catch {}
+  };
+
+  const copyMemo = async () => {
+    const note = `ASTRO ${amount} CITV`;
+    try {
+      await navigator.clipboard.writeText(note);
+      setCopied("not");
+      setTimeout(() => setCopied(""), 1500);
     } catch {}
   };
 
   return (
     <div className="ton-wallet">
-      <h3>TON Cüzdan</h3>
-      <p className="muted">CITV jetton ile bakiye yükle. Sadece TON ağı.</p>
+      <h3>TON Cuzdan</h3>
+      <p className="muted">Sadece TON agi. Otomatik bakiye yok — transfer sonra dogrulama.</p>
 
       <div className="ton-card">
         <div className="ton-row">
@@ -44,29 +49,35 @@ export default function TonWallet({ balance = 0, onDeposit }) {
           <b>{formatTon(balance)} CITV</b>
         </div>
         <div className="ton-row">
-          <span>Hazine adresi</span>
+          <span>Hazine</span>
           <code className="ton-addr">{TREASURY_ADDRESS}</code>
         </div>
-        <button className="btn" onClick={copy}>
-          {copied ? "Kopyalandı" : "Adresi kopyala"}
+        <label className="ton-row">
+          <span>Yatir (CITV)</span>
+          <input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+            inputMode="decimal"
+          />
+        </label>
+        <button className="btn" onClick={copyAddr}>
+          {copied === "adres" ? "Kopyalandi" : "Adresi kopyala"}
+        </button>
+        <button className="btn" onClick={copyMemo}>
+          {copied === "not" ? "Kopyalandi" : "Transfer notunu kopyala"}
         </button>
       </div>
 
       <div className="ton-card">
         <div className="ton-row">
-          <span>Hazine TON bakiyesi</span>
-          <b>{treasury ? formatTon(treasury.ton) + " TON" : "…"}</b>
+          <span>Hazine TON</span>
+          <b>{treasury ? formatTon(treasury.ton) + " TON" : "..."}</b>
         </div>
         <div className="ton-row">
           <span>Durum</span>
           <b>{treasury?.state || "bekleniyor"}</b>
         </div>
       </div>
-
-      <p className="muted small">
-        CITV_MASTER henüz boş. Jetton'u bastıktan sonra
-        src/utils/tonWallet.js içindeki sabiti doldur.
-      </p>
     </div>
   );
 }
