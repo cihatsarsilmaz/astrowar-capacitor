@@ -1,7 +1,7 @@
 # ARENA LEDGER — AstrogameWAR only
 
-## Tur 2026-09-22 01:14 TR
-Commit: pending (battle/resolve mode=arena receipt)
+## Tur 2026-09-22 01:17 TR
+Commit: 1e6d2ab7e77afbced304bc6ad79e42a01b7d5c60
 Issue18: kismi
 Sim: 5 birim; interceptor/reaper/corebreak yok
 UI: HUD onceki tur; receipt satir mac bitince
