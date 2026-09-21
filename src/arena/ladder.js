@@ -1,4 +1,4 @@
-/** Kupa merdiveni — sim receipt.trophies ile bağlanır. */
+/** Kupa merdiveni — sim receipt.trophies ile baglanir. */
 const { ARENAS, arenaOf, applyTrophies } = require("./sim");
 
 function seasonSoftReset(trophies) {

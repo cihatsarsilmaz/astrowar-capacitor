@@ -1,12 +1,12 @@
 # Arena (Faz 1)
 
-Deterministik 10 Hz sim. Oyun JSX'ine henüz bağlı değil.
+Clash Royale dongusu; klon degil. Idle win% savasi durur; merdiven kupasi buradan gelir.
 
-```
+```bash
 node src/arena/sim.js
 ```
 
-- `sim.js` — enerji, yerleştirme, hareket, hasar, bot, kupa receipt
-- `ladder.js` — arena kapıları + sezon yumuşak reset
-
-Issue #18 (helpers kopyası) bu committe kapanmaz.
+- 10 Hz tick, 180s + 60s uzatma
+- 5 birim, 3 yapi, enerji 0-10
+- Receipt: winner, tEnd, core, sats, trophies +30/-20
+- Issue #18 (JSX helper kopya) bu klasorun isi degil; ayri adim

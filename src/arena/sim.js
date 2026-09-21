@@ -1,11 +1,12 @@
 /**
  * AstrogameWAR Arena sim v1 — Faz 1 kesiti
- * scout + gunship + hauler + cruiser + artillery + 3 yapı + bot
- * Deterministik: aynı seed + aynı cmd = aynı receipt
+ * scout + gunship + hauler + cruiser + artillery + 3 yapi + enerji + bot
+ * Deterministik: ayni seed + ayni cmd = ayni receipt
  */
 const TICK_HZ = 10;
 const DT = 0.1;
 const MATCH_S = 180;
+const OT_S = 60;
 const E_MAX = 10;
 const E_START = 5;
 const E_PER_S = 0.35;
@@ -289,6 +290,16 @@ function structureRetaliate(state) {
   applyDamage(state, hits);
 }
 
+function decideByHp(state) {
+  const [a, b] = state.players;
+  if (a.coreHp !== b.coreHp) state.winner = a.coreHp > b.coreHp ? 0 : 1;
+  else {
+    const as = a.satL + a.satR, bs = b.satL + b.satR;
+    if (as !== bs) state.winner = as > bs ? 0 : 1;
+    else state.winner = "draw";
+  }
+}
+
 function checkVictory(state) {
   const [a, b] = state.players;
   if (b.coreHp <= 0 && a.coreHp <= 0) {
@@ -296,14 +307,14 @@ function checkVictory(state) {
   }
   if (b.coreHp <= 0) { state.phase = "done"; state.winner = 0; return; }
   if (a.coreHp <= 0) { state.phase = "done"; state.winner = 1; return; }
-  if (state.t + 1e-9 >= MATCH_S) {
+  if (state.phase === "main" && state.t + 1e-9 >= MATCH_S) {
+    state.phase = "ot";
+    state.otStart = state.t;
+    return;
+  }
+  if (state.phase === "ot" && state.t + 1e-9 >= (state.otStart || MATCH_S) + OT_S) {
     state.phase = "done";
-    if (a.coreHp !== b.coreHp) state.winner = a.coreHp > b.coreHp ? 0 : 1;
-    else {
-      const as = a.satL + a.satR, bs = b.satL + b.satR;
-      if (as !== bs) state.winner = as > bs ? 0 : 1;
-      else state.winner = "draw";
-    }
+    decideByHp(state);
   }
 }
 
@@ -311,9 +322,11 @@ function botThink(state, player, delayTicks, errRate) {
   if (state.tTick % delayTicks !== 0) return null;
   if (state.rng() < errRate) return null;
   const p = state.players[player];
-  const prefer = state.t < 30
+  const prefer = state.t < 50
     ? ["scout", "gunship", "hauler"]
-    : ["artillery", "cruiser", "gunship", "hauler", "scout"];
+    : state.t < 100
+      ? ["cruiser", "gunship", "hauler", "scout"]
+      : ["artillery", "cruiser", "gunship", "hauler", "scout"];
   const cycle = prefer.find((id) => p.hand.includes(id));
   if (!cycle) return null;
   if (UNITS[cycle].energy > p.energy) return null;
@@ -328,6 +341,7 @@ function createMatch(seed) {
     t: 0,
     tTick: 0,
     phase: "main",
+    otStart: null,
     winner: null,
     seed: seed >>> 0,
     rng,
@@ -362,7 +376,7 @@ function step(state) {
 
 function runMatch(seed) {
   const s = createMatch(seed);
-  const maxTicks = MATCH_S * TICK_HZ + 2;
+  const maxTicks = (MATCH_S + OT_S) * TICK_HZ + 2;
   for (let i = 0; i < maxTicks && s.phase !== "done"; i++) step(s);
   if (s.phase !== "done") checkVictory(s);
   return receipt(s);
