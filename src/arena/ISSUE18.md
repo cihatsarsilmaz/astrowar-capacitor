@@ -1,31 +1,20 @@
 # Issue 18 incremental
 
-Durum 2026-09-21 21:16 TR: kopya HALA `src/AstrogameWAR.jsx` §3 icinde. Issue ACIK. Kapatma.
+Durum 2026-09-21 22:23 TR: 6 kopya SILINDI. `helpers.js` import + getRank/getNext/techMul wrapper. `production` JSX te kaldi. Issue ACIK — yalan kapanis yok; playtest sonrasi kapanir.
 
-`production` JSX te kalir. TEST dosyasina dokunma. Baska fonksiyon silme.
+TEST dosyasina dokunulmadi. Baska fonksiyon silinmedi.
 
-## Uygulanacak yama (tek adim)
-
-JSX tepesine, react importunun hemen altina:
+## Uygulanan
+JSX tepesine:
 ```
 import { fmt, getRank as getRankH, getNext as getNextH, techMul as techMulH, labDisc, storageCap } from "./utils/helpers.js";
 ```
 
-§3 icindeki 6 kopyayi SIL, yerlerine:
+§3:
 ```
 const getRank = xp => getRankH(xp, STAR_RANKS);
 const getNext = xp => getNextH(xp, STAR_RANKS);
 const techMul = (tech, key) => techMulH(tech, key, TECHS);
 ```
 
-SILINECEK (tam eslesme):
-```
-const fmt = n => { if(n>=1e6)return(n/1e6).toFixed(1)+"M"; if(n>=1000)return(n/1000).toFixed(1)+"K"; return Math.floor(n)+""; };
-const getRank    = xp => [...STAR_RANKS].reverse().find(r=>xp>=r.min)||STAR_RANKS[0];
-const getNext    = xp => STAR_RANKS.find(r=>r.min>xp)||null;
-const techMul    = (tech,key) => { const e=TECH_BY_BONUS(key); return e?1+(tech[e[0]]||0)*e[1].per:1; };
-const labDisc    = b => Math.max(0.35,1-((b.lab||1)-1)*.10);
-const storageCap = b => ({ metal:(b.metalMine||1)*50000*Math.pow(1.4,(b.metalMine||1)-1)+(b.depot||1)*100000, crystal:(b.crystalMine||1)*20000*Math.pow(1.4,(b.crystalMine||1)-1)+(b.depot||1)*40000 });
-```
-
-Issue kapanmaz ta ki bu 6 kopya yok.
+f18559e AstrogameWAR.jsx dosyasini PLACEHOLDER_DO_NOT_USE yapmisti; bu tur onceki 8aaa52e icerigini geri alip yamayi uyguladi.
