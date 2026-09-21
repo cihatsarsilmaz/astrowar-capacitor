@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createMatch, step, place, UNITS } from "./sim.js";
+import { buildReceipt } from "./receipt.js";
 import { Q6_N, Q6_P50, Q6_P95, loadLogs, recordLag, resetLogs, summarize } from "./q6.js";
 
 const W = 360, H = 560;
@@ -123,6 +124,7 @@ export default function ArenaView() {
   const [hand, setHand] = useState([]);
   const [selected, setSelected] = useState(null);
   const [done, setDone] = useState(null);
+  const [receipt, setReceipt] = useState(null);
   const [energy, setEnergy] = useState(5);
   const [hp, setHp] = useState({ me: { core: 4200, satL: 2400, satR: 2400 }, foe: { core: 4200, satL: 2400, satR: 2400 } });
   const [hint, setHint] = useState("Kart sec, kendi yarin (alt) icine bas");
@@ -152,7 +154,7 @@ export default function ArenaView() {
         setHand(snap.hand);
         setEnergy(snap.energy);
         setHp({ me: snap.me, foe: snap.foe });
-        if (s.phase === "done") setDone(s.winner);
+        if (s.phase === "done") { setDone(s.winner); setReceipt(buildReceipt(s)); }
       }
       const ctx = canvasRef.current?.getContext("2d");
       if (ctx && s) draw(ctx, s, selectedRef.current);
@@ -299,7 +301,17 @@ export default function ArenaView() {
         <button onClick={runAuto} style={{ padding: "8px 12px", background: "#334155", color: "#e2e8f0", border: 0, borderRadius: 8 }}>Q6 auto x{Q6_N}</button>
         <button onClick={() => setQ6(resetLogs())} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>sifirla</button>
       </div>
-      {done !== null && <div style={{ marginTop: 12 }}>Bitti. Kazanan: {String(done)}</div>}
+      {done !== null && (
+        <div style={{ marginTop: 12, fontSize: 12 }}>
+          <div>Bitti. Kazanan: {String(done)}</div>
+          {receipt && (
+            <div style={{ marginTop: 6, color: "#94a3b8" }}>
+              receipt mode={receipt.mode} seed={receipt.seed} tEnd={receipt.tEnd}
+              {" "}kupa {receipt.trophies.after[0]}→arena {receipt.trophies.arena[0]}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
