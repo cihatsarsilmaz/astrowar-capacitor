@@ -7,11 +7,16 @@ const W = 360, H = 560;
 function draw(ctx, s, selected) {
   ctx.fillStyle = "#0b1220";
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = "#334155";
+  ctx.fillStyle = "rgba(34, 211, 238, 0.07)";
+  ctx.fillRect(0, H / 2, W, H / 2);
+  ctx.fillStyle = "rgba(251, 146, 60, 0.07)";
+  ctx.fillRect(0, 0, W, H / 2);
+  ctx.strokeStyle = "#64748b";
   ctx.beginPath();
   ctx.moveTo(0, H / 2);
   ctx.lineTo(W, H / 2);
   ctx.stroke();
+
   const map = (x, y) => [x * W, (1 - y) * H];
   const structs = (p, color) => {
     const pts = [
@@ -32,6 +37,7 @@ function draw(ctx, s, selected) {
   };
   structs(s.players[0], "#22d3ee");
   structs(s.players[1], "#fb923c");
+
   for (const p of s.players) {
     for (const u of p.units) {
       const [px, py] = map(u.x, u.y);
@@ -39,9 +45,10 @@ function draw(ctx, s, selected) {
       ctx.fillRect(px - 5, py - 5, 10, 10);
     }
   }
+
   ctx.fillStyle = "#f8fafc";
-  ctx.font = "12px sans-serif";
-  ctx.fillText(`t ${s.t.toFixed(1)}  E ${s.players[0].energy.toFixed(1)}  ${s.phase}`, 8, 16);
+  ctx.font = "14px sans-serif";
+  ctx.fillText(`t ${s.t.toFixed(1)}   E ${s.players[0].energy.toFixed(1)}/10   ${s.phase}`, 8, 18);
   if (selected) ctx.fillText("secili: " + selected, 8, 32);
 }
 
@@ -144,13 +151,7 @@ export default function ArenaView() {
       <div style={{ fontSize: 12, marginBottom: 8, color: q6.pass ? "#4ade80" : q6.ready ? "#f87171" : "#94a3b8" }}>
         {q6Line(q6)}
       </div>
-      <canvas
-        ref={canvasRef}
-        width={W}
-        height={H}
-        onPointerDown={onCanvas}
-        style={{ width: "100%", maxWidth: 360, border: "1px solid #334155", touchAction: "manipulation" }}
-      />
+      <canvas ref={canvasRef} width={W} height={H} onPointerDown={onCanvas} style={{ width: "100%", maxWidth: 360, border: "1px solid #334155", touchAction: "manipulation" }} />
       <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
         {hand.map((id, i) => (
           <button key={i} onClick={() => setSelected(id)} style={{
@@ -162,12 +163,8 @@ export default function ArenaView() {
         ))}
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-        <button onClick={runAuto} style={{ padding: "8px 12px", background: "#334155", color: "#e2e8f0", border: 0, borderRadius: 8 }}>
-          Q6 auto x{Q6_N}
-        </button>
-        <button onClick={() => setQ6(resetLogs())} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>
-          sifirla
-        </button>
+        <button onClick={runAuto} style={{ padding: "8px 12px", background: "#334155", color: "#e2e8f0", border: 0, borderRadius: 8 }}>Q6 auto x{Q6_N}</button>
+        <button onClick={() => setQ6(resetLogs())} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>sifirla</button>
       </div>
       {done !== null && <div style={{ marginTop: 12 }}>Bitti. Kazanan: {String(done)}</div>}
     </div>
