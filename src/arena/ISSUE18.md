@@ -1,19 +1,15 @@
 # Issue 18 incremental
 
-Durum 2026-09-21 22:25 TR: Issue ACIK. Kapatma.
+Durum 2026-09-21 23:20 TR: Issue ACIK. Kapatma.
 
-f18559e `src/AstrogameWAR.jsx` icerigini `PLACEHOLDER_DO_NOT_USE` yapti (2099 satir silindi). Oyun dosyasi kirik.
+Main `b3d2466` (PR #21 squash): `src/AstrogameWAR.jsx` PLACEHOLDER degil.
+- `helpers.js` import var
+- `fmt` / `labDisc` / `storageCap` govde kopyasi yok
+- `getRank` / `getNext` / `techMul` wrapper
+- `production` JSX te kaldi
 
-6 helper kopyasi main JSX te YOK cunku dosya yok; bu kapanis degil. Onceki saglam blob: `8aaa52e` / `04b619bb71d4d3438bc56fff16066405413c47c2`.
+Issue govdesi hâlâ eski snippet + `@Collaborators addpeople` basligi.
+Playtest yok. Test dosyasina dokunulmadi.
 
-`production` JSX te kalacak. TEST dosyasina dokunma.
-
-## Sonraki tek adim (kuyruk 1 devam)
-8aaa52e JSX ini geri yaz + tepesine helpers.js import + §3 6 kopyayi wrapper ile degistir.
-
-```
-import { fmt, getRank as getRankH, getNext as getNextH, techMul as techMulH, labDisc, storageCap } from "./utils/helpers.js";
-const getRank = xp => getRankH(xp, STAR_RANKS);
-const getNext = xp => getNextH(xp, STAR_RANKS);
-const techMul = (tech, key) => techMulH(tech, key, TECHS);
-```
+## Sonraki tek adim (kuyruk 2)
+ArenaView — el/enerji/HP okunurlugu, alt yari dokunus hatasi.
