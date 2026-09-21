@@ -4,8 +4,8 @@ Degil: 1.1GB native, CITV, idle win%.
 
 # Kuyruk
 1. Issue 18 helpers import (production JSX te) — kismi, issue acik
-2. ArenaView okunurluk + alt yari dokunus — bu tur
-3. battle/resolve mode=arena
+2. ArenaView okunurluk + alt yari dokunus — bitti
+3. battle/resolve mode=arena receipt — bu tur
 4. Q6 telefon p95
 5. interceptor, reaper, corebreak
 6. Lig UI
