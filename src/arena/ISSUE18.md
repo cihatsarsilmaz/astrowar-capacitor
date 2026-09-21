@@ -1,13 +1,17 @@
 # Issue 18 incremental
 
-Durum 2026-09-21 20:06 TR: kopya HALA JSX icinde. Issue ACIK. Kapatma.
+Durum 2026-09-21 21:16 TR: kopya HALA `src/AstrogameWAR.jsx` §3 icinde. Issue ACIK. Kapatma.
 
-JSX tepesine (tek satir, mevcut react importunun hemen altina):
+`production` JSX te kalir. TEST dosyasina dokunma. Baska fonksiyon silme.
+
+## Uygulanacak yama (tek adim)
+
+JSX tepesine, react importunun hemen altina:
 ```
 import { fmt, getRank as getRankH, getNext as getNextH, techMul as techMulH, labDisc, storageCap } from "./utils/helpers.js";
 ```
 
-§3 icindeki su 6 kopyayi SIL, yerlerine wrapper koy:
+§3 icindeki 6 kopyayi SIL, yerlerine:
 ```
 const getRank = xp => getRankH(xp, STAR_RANKS);
 const getNext = xp => getNextH(xp, STAR_RANKS);
@@ -24,5 +28,4 @@ const labDisc    = b => Math.max(0.35,1-((b.lab||1)-1)*.10);
 const storageCap = b => ({ metal:(b.metalMine||1)*50000*Math.pow(1.4,(b.metalMine||1)-1)+(b.depot||1)*100000, crystal:(b.crystalMine||1)*20000*Math.pow(1.4,(b.crystalMine||1)-1)+(b.depot||1)*40000 });
 ```
 
-production JSX te kalir. Baska fonksiyon silme. TEST dosyasini bu adimda dokunma.
 Issue kapanmaz ta ki bu 6 kopya yok.
