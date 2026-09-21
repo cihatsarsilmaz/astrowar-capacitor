@@ -1,8 +1,6 @@
 /** Kupa merdiveni — sim receipt.trophies ile baglanir. */
-const { ARENAS, arenaOf, applyTrophies } = require("./sim");
+export { ARENAS, arenaOf, applyTrophies } from "./sim.js";
 
-function seasonSoftReset(trophies) {
+export function seasonSoftReset(trophies) {
   return Math.max(400, Math.floor(trophies * 0.6));
 }
-
-module.exports = { ARENAS, arenaOf, applyTrophies, seasonSoftReset };
