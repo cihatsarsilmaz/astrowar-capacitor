@@ -3,13 +3,35 @@ import { createMatch, step, place, UNITS } from "./sim.js";
 import { Q6_N, Q6_P50, Q6_P95, loadLogs, recordLag, resetLogs, summarize } from "./q6.js";
 
 const W = 360, H = 560;
+const OWN_MAX_Y = 0.5;
+
+function hud(s) {
+  const me = s.players[0], fo = s.players[1];
+  return {
+    t: s.t,
+    phase: s.phase,
+    energy: me.energy,
+    hand: [...me.hand],
+    me: { core: me.coreHp, satL: me.satL, satR: me.satR },
+    foe: { core: fo.coreHp, satL: fo.satL, satR: fo.satR },
+  };
+}
+
+function bar(ctx, x, y, w, h, ratio, fill, back) {
+  ctx.fillStyle = back;
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = fill;
+  ctx.fillRect(x, y, Math.max(0, w * Math.max(0, Math.min(1, ratio))), h);
+  ctx.strokeStyle = "#94a3b8";
+  ctx.strokeRect(x, y, w, h);
+}
 
 function draw(ctx, s, selected) {
   ctx.fillStyle = "#0b1220";
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "rgba(34, 211, 238, 0.07)";
+  ctx.fillStyle = "rgba(34, 211, 238, 0.10)";
   ctx.fillRect(0, H / 2, W, H / 2);
-  ctx.fillStyle = "rgba(251, 146, 60, 0.07)";
+  ctx.fillStyle = "rgba(251, 146, 60, 0.10)";
   ctx.fillRect(0, 0, W, H / 2);
   ctx.strokeStyle = "#64748b";
   ctx.beginPath();
@@ -17,22 +39,32 @@ function draw(ctx, s, selected) {
   ctx.lineTo(W, H / 2);
   ctx.stroke();
 
+  ctx.font = "bold 12px sans-serif";
+  ctx.fillStyle = "rgba(251, 146, 60, 0.85)";
+  ctx.fillText("RAKIP", 8, 28);
+  ctx.fillStyle = "rgba(34, 211, 238, 0.95)";
+  ctx.fillText("SEN — alt yariya bas", 8, H - 10);
+
   const map = (x, y) => [x * W, (1 - y) * H];
   const structs = (p, color) => {
     const pts = [
-      [0.28, p.side === 0 ? 0.12 : 0.88, p.satL, 2400],
-      [0.72, p.side === 0 ? 0.12 : 0.88, p.satR, 2400],
-      [0.50, p.side === 0 ? 0.06 : 0.94, p.coreHp, 4200],
+      [0.28, p.side === 0 ? 0.12 : 0.88, p.satL, 2400, "L"],
+      [0.72, p.side === 0 ? 0.12 : 0.88, p.satR, 2400, "R"],
+      [0.50, p.side === 0 ? 0.06 : 0.94, p.coreHp, 4200, "C"],
     ];
-    for (const [x, y, hp, max] of pts) {
+    for (const [x, y, hp, max, tag] of pts) {
       const [px, py] = map(x, y);
-      ctx.fillStyle = color;
+      ctx.fillStyle = hp <= 0 ? "#334155" : color;
       ctx.beginPath();
-      ctx.arc(px, py, 10, 0, Math.PI * 2);
+      ctx.arc(px, py, 12, 0, Math.PI * 2);
       ctx.fill();
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillText(tag, px - 4, py + 4);
+      bar(ctx, px - 28, py - 22, 56, 7, hp / max, hp / max < 0.35 ? "#f87171" : color, "#1e293b");
       ctx.fillStyle = "#e2e8f0";
       ctx.font = "10px sans-serif";
-      ctx.fillText(Math.ceil(hp) + "/" + max, px - 18, py - 14);
+      ctx.fillText(Math.ceil(hp) + "/" + max, px - 28, py - 24);
     }
   };
   structs(s.players[0], "#22d3ee");
@@ -42,14 +74,25 @@ function draw(ctx, s, selected) {
     for (const u of p.units) {
       const [px, py] = map(u.x, u.y);
       ctx.fillStyle = p.side === 0 ? "#38bdf8" : "#f87171";
-      ctx.fillRect(px - 5, py - 5, 10, 10);
+      ctx.fillRect(px - 6, py - 6, 12, 12);
     }
   }
 
+  const e = s.players[0].energy;
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(6, H / 2 + 8, 160, 22);
   ctx.fillStyle = "#f8fafc";
-  ctx.font = "14px sans-serif";
-  ctx.fillText(`t ${s.t.toFixed(1)}   E ${s.players[0].energy.toFixed(1)}/10   ${s.phase}`, 8, 18);
-  if (selected) ctx.fillText("secili: " + selected, 8, 32);
+  ctx.font = "bold 13px sans-serif";
+  ctx.fillText(`E ${e.toFixed(1)}/10`, 10, H / 2 + 24);
+  for (let i = 0; i < 10; i++) {
+    ctx.fillStyle = i < Math.floor(e) ? "#22d3ee" : i < e ? "#67e8f9" : "#1e293b";
+    ctx.fillRect(78 + i * 8, H / 2 + 14, 6, 10);
+  }
+  if (selected) {
+    ctx.fillStyle = "#f8fafc";
+    ctx.font = "12px sans-serif";
+    ctx.fillText("secili: " + selected, 174, H / 2 + 24);
+  }
 }
 
 function q6Line(stats) {
@@ -58,6 +101,17 @@ function q6Line(stats) {
   const p95 = stats.p95 == null ? "-" : stats.p95.toFixed(0);
   const flag = !stats.ready ? "OLCUM" : stats.pass ? "GECTI" : "KALDI";
   return `Q6 ${stats.n}/${Q6_N}  p50 ${p50}ms (<${Q6_P50})  p95 ${p95}ms (<=${Q6_P95})  ${flag}`;
+}
+
+function pointerToSim(el, e) {
+  const rec = el.getBoundingClientRect();
+  const src = e.changedTouches?.[0] || e.touches?.[0] || e;
+  const px = (src.clientX - rec.left) / Math.max(1, rec.width);
+  const py = (src.clientY - rec.top) / Math.max(1, rec.height);
+  const x = Math.max(0.05, Math.min(0.95, px));
+  let y = 1 - Math.max(0, Math.min(1, py));
+  if (y >= OWN_MAX_Y && y < OWN_MAX_Y + 0.06) y = OWN_MAX_Y - 0.01;
+  return { x, y, py };
 }
 
 export default function ArenaView() {
@@ -69,13 +123,19 @@ export default function ArenaView() {
   const [hand, setHand] = useState([]);
   const [selected, setSelected] = useState(null);
   const [done, setDone] = useState(null);
+  const [energy, setEnergy] = useState(5);
+  const [hp, setHp] = useState({ me: { core: 4200, satL: 2400, satR: 2400 }, foe: { core: 4200, satL: 2400, satR: 2400 } });
+  const [hint, setHint] = useState("Kart sec, kendi yarin (alt) icine bas");
   const [q6, setQ6] = useState(() => summarize(loadLogs().map((x) => x.ms)));
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
 
   useEffect(() => {
     stateRef.current = createMatch(42);
-    setHand([...stateRef.current.players[0].hand]);
+    const start = hud(stateRef.current);
+    setHand(start.hand);
+    setEnergy(start.energy);
+    setHp({ me: start.me, foe: start.foe });
     let acc = 0;
     let last = performance.now();
     let raf;
@@ -88,7 +148,10 @@ export default function ArenaView() {
           step(s);
           acc -= 100;
         }
-        setHand([...s.players[0].hand]);
+        const snap = hud(s);
+        setHand(snap.hand);
+        setEnergy(snap.energy);
+        setHp({ me: snap.me, foe: snap.foe });
         if (s.phase === "done") setDone(s.winner);
       }
       const ctx = canvasRef.current?.getContext("2d");
@@ -106,21 +169,40 @@ export default function ArenaView() {
 
   const tryPlace = (x, y, src) => {
     const sel = selectedRef.current;
-    if (!sel) return false;
+    if (!sel) {
+      setHint("Once elden bir kart sec");
+      return false;
+    }
     const s = stateRef.current;
     if (!s || s.phase === "done") return false;
+    if (y >= OWN_MAX_Y) {
+      setHint("Rakip yari. Alt yariya (senin saha) bas");
+      return false;
+    }
+    const cost = UNITS[sel]?.energy ?? 99;
+    if (s.players[0].energy < cost) {
+      setHint(`Enerji yetmez (${s.players[0].energy.toFixed(1)}/${cost})`);
+      return false;
+    }
     pendingLag.current = performance.now();
     autoRef.current = src === "auto";
     const ok = place(s, { tTick: s.tTick, player: 0, type: "place", unitId: sel, x, y });
-    if (!ok) pendingLag.current = null;
+    if (!ok) {
+      pendingLag.current = null;
+      setHint("Koyulamadi — alt yari + enerji + eldeki kart");
+    } else {
+      setHint(sel + " konuldu");
+    }
     setHand([...s.players[0].hand]);
+    setEnergy(s.players[0].energy);
     return ok;
   };
 
   const onCanvas = (e) => {
-    const rec = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rec.left) / rec.width;
-    const y = 1 - (e.clientY - rec.top) / rec.height;
+    e.preventDefault();
+    const el = canvasRef.current;
+    if (!el) return;
+    const { x, y } = pointerToSim(el, e);
     tryPlace(x, y, "touch");
   };
 
@@ -145,22 +227,73 @@ export default function ArenaView() {
     tick();
   };
 
+  const hpRow = (label, pack, color) => (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, marginBottom: 4 }}>
+      <span style={{ width: 44, color }}>{label}</span>
+      {[["L", pack.satL, 2400], ["R", pack.satR, 2400], ["C", pack.core, 4200]].map(([tag, v, max]) => (
+        <span key={tag} style={{ flex: 1 }}>
+          <span style={{ opacity: 0.7 }}>{tag} {Math.ceil(v)}</span>
+          <span style={{ display: "block", height: 6, background: "#1e293b", borderRadius: 3 }}>
+            <span style={{ display: "block", height: 6, width: `${Math.max(0, 100 * v / max)}%`, background: v / max < 0.35 ? "#f87171" : color, borderRadius: 3 }} />
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+
   return (
     <div style={{ background: "#020617", color: "#e2e8f0", minHeight: "100vh", padding: 12, fontFamily: "sans-serif" }}>
       <div style={{ fontSize: 12, marginBottom: 6 }}>Arena Faz-1 · ?mode=arena</div>
       <div style={{ fontSize: 12, marginBottom: 8, color: q6.pass ? "#4ade80" : q6.ready ? "#f87171" : "#94a3b8" }}>
         {q6Line(q6)}
       </div>
-      <canvas ref={canvasRef} width={W} height={H} onPointerDown={onCanvas} style={{ width: "100%", maxWidth: 360, border: "1px solid #334155", touchAction: "manipulation" }} />
-      <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
-        {hand.map((id, i) => (
-          <button key={i} onClick={() => setSelected(id)} style={{
-            flex: 1, padding: 8, background: selected === id ? "#22d3ee" : "#1e293b",
-            color: selected === id ? "#0b1220" : "#e2e8f0", border: 0, borderRadius: 8,
-          }}>
-            {id} ({UNITS[id].energy})
-          </button>
-        ))}
+      {hpRow("RAKIP", hp.foe, "#fb923c")}
+      <canvas
+        ref={canvasRef}
+        width={W}
+        height={H}
+        onPointerDown={onCanvas}
+        style={{
+          width: "100%",
+          maxWidth: 360,
+          aspectRatio: `${W} / ${H}`,
+          height: "auto",
+          border: "1px solid #334155",
+          touchAction: "none",
+          display: "block",
+        }}
+      />
+      {hpRow("SEN", hp.me, "#22d3ee")}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "6px 0 8px", fontSize: 14, fontWeight: 700 }}>
+        <span>Enerji {energy.toFixed(1)}/10</span>
+        <span style={{ display: "flex", gap: 3 }}>
+          {Array.from({ length: 10 }, (_, i) => (
+            <span key={i} style={{
+              width: 10, height: 14, borderRadius: 2,
+              background: i < Math.floor(energy) ? "#22d3ee" : i < energy ? "#67e8f9" : "#1e293b",
+            }} />
+          ))}
+        </span>
+      </div>
+      <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8 }}>{hint}</div>
+      <div style={{ display: "flex", gap: 6 }}>
+        {hand.map((id, i) => {
+          const cost = UNITS[id].energy;
+          const can = energy >= cost;
+          const on = selected === id;
+          return (
+            <button key={i} onClick={() => setSelected(id)} style={{
+              flex: 1, padding: "10px 6px",
+              background: on ? "#22d3ee" : "#1e293b",
+              color: on ? "#0b1220" : can ? "#e2e8f0" : "#64748b",
+              border: can ? "1px solid #334155" : "1px solid #1e293b",
+              borderRadius: 8, opacity: can ? 1 : 0.55, fontWeight: 700,
+            }}>
+              <div style={{ fontSize: 13 }}>{id}</div>
+              <div style={{ fontSize: 11, opacity: 0.85 }}>E {cost}</div>
+            </button>
+          );
+        })}
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
         <button onClick={runAuto} style={{ padding: "8px 12px", background: "#334155", color: "#e2e8f0", border: 0, borderRadius: 8 }}>Q6 auto x{Q6_N}</button>
