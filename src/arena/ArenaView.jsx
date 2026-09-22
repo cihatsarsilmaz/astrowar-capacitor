@@ -3,7 +3,7 @@ import { createMatch, step, place, UNITS } from "./sim.js";
 import { buildReceipt } from "./receipt.js";
 import { arenaOf, seasonSoftReset } from "./ladder.js";
 import { Q6_N, Q6_P50, Q6_P95, loadLogs, recordLag, resetLogs, summarize } from "./q6.js";
-import { LIVE_WAIT_MS, acceptLive, beginSearch, cancelSearch, createQueue, queueLine, tickQueue } from "./matchmaking.js";
+import { LIVE_WAIT_MS, acceptBot, acceptLive, beginSearch, cancelSearch, createQueue, queueLine, tickQueue } from "./matchmaking.js";
 
 const W = 360, H = 560;
 const OWN_MAX_Y = 0.5;
@@ -133,6 +133,11 @@ function pointerToSim(el, e) {
   return { x, y, py };
 }
 
+function seedFromKey(key) {
+  if (key.startsWith("live-") || key.startsWith("bot-")) return Number(key.slice(5)) >>> 0;
+  return 42;
+}
+
 export default function ArenaView() {
   const canvasRef = useRef(null);
   const stateRef = useRef(null);
@@ -160,7 +165,13 @@ export default function ArenaView() {
     const id = setInterval(() => {
       setQueue((q) => {
         const next = tickQueue(q);
-        if (next.status === "timeout") setHint("Rakip yok — bot sonra");
+        if (next.status === "timeout") {
+          const seed = ((next.startedAt || Date.now()) ^ (cupsRef.current * 7919)) >>> 0;
+          const bot = acceptBot(next, { seed });
+          setMatchKey("bot-" + seed);
+          setHint(`Eslesme bot seed=${seed} (timeout sonrasi)`);
+          return bot;
+        }
         return next;
       });
     }, 250);
@@ -168,7 +179,7 @@ export default function ArenaView() {
   }, [queue.status]);
 
   useEffect(() => {
-    const seed = matchKey.startsWith("live-") ? Number(matchKey.slice(5)) >>> 0 : 42;
+    const seed = seedFromKey(matchKey);
     stateRef.current = createMatch(seed);
     const start = hud(stateRef.current);
     setHand(start.hand);
@@ -286,7 +297,7 @@ export default function ArenaView() {
   const onLiveSearch = () => {
     const liveUrl = typeof window !== "undefined" ? window.__ARENA_LIVE_URL || null : null;
     setQueue(beginSearch(createQueue({ cups: cupsRef.current }), { liveUrl }));
-    setHint(liveUrl ? "Canli kuyruk — sunucu" : `Canli kuyruk ${LIVE_WAIT_MS / 1000}s — sunucu yok, bot sonra`);
+    setHint(liveUrl ? "Canli kuyruk — sunucu" : `Canli kuyruk ${LIVE_WAIT_MS / 1000}s — sonra bot`);
   };
 
   const onLiveCancel = () => {
@@ -303,6 +314,14 @@ export default function ArenaView() {
     setQueue(next);
     setMatchKey("live-" + seed);
     setHint(`Eslesme live seed=${seed} (lokal peer isareti — gercek rakip yok)`);
+  };
+
+  const onBotFallback = () => {
+    const seed = ((queue.startedAt || Date.now()) ^ (cupsRef.current * 7919)) >>> 0;
+    const bot = acceptBot(queue, { seed });
+    setQueue(bot);
+    setMatchKey("bot-" + seed);
+    setHint(`Eslesme bot seed=${seed} (timeout sonrasi)`);
   };
 
   const hpRow = (label, pack, color) => (
@@ -388,6 +407,7 @@ export default function ArenaView() {
         <button onClick={onLiveSearch} style={{ padding: "8px 12px", background: "#14532d", color: "#bbf7d0", border: 0, borderRadius: 8 }}>canli esles</button>
         <button onClick={onLiveCancel} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>iptal</button>
         <button onClick={onLiveAcceptDemo} style={{ padding: "8px 12px", background: "#3f3f46", color: "#e4e4e7", border: 0, borderRadius: 8 }}>lokal peer</button>
+        <button onClick={onBotFallback} style={{ padding: "8px 12px", background: "#7c2d12", color: "#fed7aa", border: 0, borderRadius: 8 }}>bot esles</button>
       </div>
       {done !== null && (
         <div style={{ marginTop: 12, fontSize: 12 }}>
