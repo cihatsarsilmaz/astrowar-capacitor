@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 08:14 TR
+Commit: f0ce8715145f037f7170b2829af67bd302f0db1f
+Issue18: kismi
+Sim: 8 birim ayni; yetenek kacinma/kargo_hp simde formulsuz
+UI: Saha birim HP bari + 4 harf ad
+Bakis:
+Issue 18 kopya yok (fmt/labDisc/storageCap import); kapatilmadi.
+Telefon Q6 bloklu; p95 uydurulmadi.
+Sonraki tek adim: rakip enerji HUD (oyuncu 0 disinda).
+Sonraki: Rakip enerji HUD
+
 ## Tur 2026-09-22 07:41 TR
 Commit: f6f1e69777e532b40d01e4725e8420ffdaa0569d
 Issue18: kismi

@@ -6,6 +6,7 @@ Degil: 1.1GB native, CITV, idle win%.
 1-12. onceki — bitti / kismi (Issue 18 acik)
 13. Telefon touch Q6 n>=30 rapor — bloklu (kullanici cihaz)
 14. Mac saati + OT + cift enerji HUD — bitti
-15. Cekirdek AKTIF HUD — bitti (bu tur)
-16. Receipt replay (kupa yazilmaz) — bitti (bu tur)
-17. Telefon touch Q6 n>=30 rapor — sonraki (kullanici)
+15. Cekirdek AKTIF HUD — bitti
+16. Receipt replay (kupa yazilmaz) — bitti
+17. Saha birim HP + ad — bitti (bu tur)
+18. Rakip enerji HUD — sonraki
