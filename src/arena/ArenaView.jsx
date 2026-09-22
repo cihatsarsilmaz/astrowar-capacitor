@@ -3,6 +3,7 @@ import { createMatch, step, place, UNITS } from "./sim.js";
 import { buildReceipt } from "./receipt.js";
 import { arenaOf, seasonSoftReset } from "./ladder.js";
 import { Q6_N, Q6_P50, Q6_P95, loadLogs, recordLag, resetLogs, summarize } from "./q6.js";
+import { LIVE_WAIT_MS, acceptLive, beginSearch, cancelSearch, createQueue, queueLine, tickQueue } from "./matchmaking.js";
 
 const W = 360, H = 560;
 const OWN_MAX_Y = 0.5;
@@ -148,16 +149,33 @@ export default function ArenaView() {
   const [cups, setCups] = useState(() => cupsRef.current);
   const [hint, setHint] = useState("Kart sec, kendi yarin (alt) icine bas");
   const [q6, setQ6] = useState(() => summarize(loadLogs().map((x) => x.ms)));
+  const [queue, setQueue] = useState(() => createQueue({ cups: cupsRef.current }));
+  const [matchKey, setMatchKey] = useState("practice-42");
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   useEffect(() => { cupsRef.current = cups; }, [cups]);
 
   useEffect(() => {
-    stateRef.current = createMatch(42);
+    if (queue.status !== "searching") return;
+    const id = setInterval(() => {
+      setQueue((q) => {
+        const next = tickQueue(q);
+        if (next.status === "timeout") setHint("Rakip yok — bot sonra");
+        return next;
+      });
+    }, 250);
+    return () => clearInterval(id);
+  }, [queue.status]);
+
+  useEffect(() => {
+    const seed = matchKey.startsWith("live-") ? Number(matchKey.slice(5)) >>> 0 : 42;
+    stateRef.current = createMatch(seed);
     const start = hud(stateRef.current);
     setHand(start.hand);
     setEnergy(start.energy);
     setHp({ me: start.me, foe: start.foe });
+    setDone(null);
+    setReceipt(null);
     let acc = 0;
     let last = performance.now();
     let raf;
@@ -194,7 +212,7 @@ export default function ArenaView() {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [matchKey]);
 
   const tryPlace = (x, y, src) => {
     const sel = selectedRef.current;
@@ -265,6 +283,28 @@ export default function ArenaView() {
     setHint(`Sezon reset ${before} → ${next} · ${a.name} (#${a.id})`);
   };
 
+  const onLiveSearch = () => {
+    const liveUrl = typeof window !== "undefined" ? window.__ARENA_LIVE_URL || null : null;
+    setQueue(beginSearch(createQueue({ cups: cupsRef.current }), { liveUrl }));
+    setHint(liveUrl ? "Canli kuyruk — sunucu" : `Canli kuyruk ${LIVE_WAIT_MS / 1000}s — sunucu yok, bot sonra`);
+  };
+
+  const onLiveCancel = () => {
+    setQueue(cancelSearch(queue));
+    setHint("Kuyruk iptal");
+  };
+
+  const onLiveAcceptDemo = () => {
+    const seed = (Date.now() ^ (cupsRef.current * 9973)) >>> 0;
+    const next = acceptLive(queue.status === "searching" ? queue : beginSearch(createQueue({ cups: cupsRef.current })), {
+      seed,
+      opponentId: "peer-local",
+    });
+    setQueue(next);
+    setMatchKey("live-" + seed);
+    setHint(`Eslesme live seed=${seed} (lokal peer isareti — gercek rakip yok)`);
+  };
+
   const hpRow = (label, pack, color) => (
     <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, marginBottom: 4 }}>
       <span style={{ width: 44, color }}>{label}</span>
@@ -286,6 +326,9 @@ export default function ArenaView() {
       <div style={{ fontSize: 12, marginBottom: 6 }}>Arena Faz-1 · ?mode=arena</div>
       <div style={{ fontSize: 12, marginBottom: 6, color: "#67e8f9" }}>
         Lig {lig.name} (#{lig.id}) · kupa {cups} · reset max(400, floor(kupa*0.6))
+      </div>
+      <div style={{ fontSize: 12, marginBottom: 6, color: queue.status === "matched" ? "#4ade80" : queue.status === "timeout" ? "#f87171" : "#94a3b8" }}>
+        {queueLine(queue)}
       </div>
       <div style={{ fontSize: 12, marginBottom: 8, color: q6.pass ? "#4ade80" : q6.ready ? "#f87171" : "#94a3b8" }}>
         {q6Line(q6)}
@@ -338,10 +381,13 @@ export default function ArenaView() {
           );
         })}
       </div>
-      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
         <button onClick={runAuto} style={{ padding: "8px 12px", background: "#334155", color: "#e2e8f0", border: 0, borderRadius: 8 }}>Q6 auto x{Q6_N}</button>
         <button onClick={() => setQ6(resetLogs())} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>sifirla</button>
         <button onClick={onSeasonReset} style={{ padding: "8px 12px", background: "#0e7490", color: "#ecfeff", border: 0, borderRadius: 8 }}>sezon reset</button>
+        <button onClick={onLiveSearch} style={{ padding: "8px 12px", background: "#14532d", color: "#bbf7d0", border: 0, borderRadius: 8 }}>canli esles</button>
+        <button onClick={onLiveCancel} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>iptal</button>
+        <button onClick={onLiveAcceptDemo} style={{ padding: "8px 12px", background: "#3f3f46", color: "#e4e4e7", border: 0, borderRadius: 8 }}>lokal peer</button>
       </div>
       {done !== null && (
         <div style={{ marginTop: 12, fontSize: 12 }}>
