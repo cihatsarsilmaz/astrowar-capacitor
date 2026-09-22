@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createMatch, step, place, UNITS, MATCH_S, OT_S, E_DOUBLE_AT } from "./sim.js";
-import { buildReceipt } from "./receipt.js";
+import { buildReceipt, postArenaReceipt } from "./receipt.js";
 import { arenaOf, seasonSoftReset } from "./ladder.js";
 import { Q6_N, Q6_P50, Q6_P95, deviceProbe, formatReport, loadLogs, recordLag, resetLogs, saveReport, summarize, summarizeTouch } from "./q6.js";
 import { LIVE_WAIT_MS, acceptBot, acceptLive, beginSearch, cancelSearch, createQueue, queueLine, tickQueue } from "./matchmaking.js";
@@ -226,6 +226,7 @@ export default function ArenaView() {
   const [selected, setSelected] = useState(null);
   const [done, setDone] = useState(null);
   const [receipt, setReceipt] = useState(null);
+  const [stamp, setStamp] = useState(null);
   const [energy, setEnergy] = useState(5);
   const [foeEnergy, setFoeEnergy] = useState(5);
   const [hp, setHp] = useState({ me: { core: 4200, satL: 2400, satR: 2400 }, foe: { core: 4200, satL: 2400, satR: 2400 } });
@@ -271,6 +272,7 @@ export default function ArenaView() {
     setCoreOn({ me: false, foe: false });
     setDone(null);
     setReceipt(null);
+    setStamp(null);
     let acc = 0;
     let last = performance.now();
     let raf;
@@ -294,10 +296,25 @@ export default function ArenaView() {
           setDone(s.winner);
           const rec = buildReceipt(s, [cupsRef.current, 0]);
           setReceipt(rec);
-          if (!String(matchKey).startsWith("replay-")) {
+          const replay = String(matchKey).startsWith("replay-");
+          if (!replay) {
             const next = saveCups(rec.trophies.after[0]);
             cupsRef.current = next;
             setCups(next);
+            const url = typeof window !== "undefined" ? window.__ARENA_RESOLVE_URL || null : null;
+            const token = typeof window !== "undefined" ? window.__ARENA_TOKEN || null : null;
+            setStamp({ ok: false, local: !url, reason: url ? "posting" : "no_url" });
+            postArenaReceipt(rec, { url, token }).then((r) => {
+              setStamp(r);
+              if (r.ok) setHint("Receipt sunucu mode=arena damga id=" + (r.receipt?.id || "?"));
+              else if (r.local) setHint("Receipt local — __ARENA_RESOLVE_URL yok");
+              else setHint("Receipt post hata: " + (r.error || "fail"));
+            }).catch((err) => {
+              setStamp({ ok: false, local: false, error: String(err && err.message || err) });
+              setHint("Receipt post hata");
+            });
+          } else {
+            setStamp({ ok: false, local: true, reason: "replay" });
           }
         }
       }
@@ -427,6 +444,7 @@ export default function ArenaView() {
     const seed = (receipt?.seed ?? seedFromKey(matchKey)) >>> 0;
     setDone(null);
     setReceipt(null);
+    setStamp(null);
     setMatchKey("replay-" + seed + "-" + Date.now());
     setHint("Replay seed=" + seed + " (kupa yazilmaz)");
   };
@@ -556,6 +574,14 @@ export default function ArenaView() {
             <div style={{ marginTop: 6, color: "#94a3b8" }}>
               receipt mode={receipt.mode} seed={receipt.seed} tEnd={receipt.tEnd}
               {" "}kupa {receipt.trophies.before[0]}→{receipt.trophies.after[0]} arena {receipt.trophies.arena[0]}
+              {stamp ? (
+                <div>
+                  damga {stamp.ok ? "sunucu" : stamp.local ? "local" : "hata"}
+                  {stamp.reason ? " " + stamp.reason : ""}
+                  {stamp.receipt?.id ? " id=" + stamp.receipt.id : ""}
+                  {stamp.error ? " " + String(stamp.error) : ""}
+                </div>
+              ) : null}
             </div>
           )}
         </div>
