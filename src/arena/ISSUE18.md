@@ -1,15 +1,15 @@
 # Issue 18 incremental
 
-Durum 2026-09-22 07:17 TR: Issue ACIK. Kapatma.
+Durum 2026-09-22 07:26 TR: Issue ACIK. Kapatma.
 
-Main: helpers import + ArenaView HUD + receipt + Q6 notu + 8 birim sim + lig UI + canli kuyruk + timeout bot + headless playtest.
+Main: helpers import + HUD + receipt + Q6 + 8 birim + lig + kuyruk + bot + headless + touch kayit UI.
 fmt/labDisc/storageCap govde kopyasi yok. production JSX te.
 
-Bu tur (kuyruk 9): Playtest olcum.
-- `src/arena/playtest.js` — `sim.place` n=30 headless
-- `npm run arena:q6`
-- Headless p50/p95 ~0ms (CPU). Telefon touch p95 bilinmiyor. GECTI yok.
-Playtest: `npm run dev` sonra `/?mode=arena`. Test dosyasina dokunulmadi.
+Bu tur (kuyruk 10): Telefon touch Q6 kayit altyapisi.
+- pointerType touch|mouse|pen|auto ayrildi
+- `Q6 touch` satiri + `touch kayit` panoya rapor
+- Telefon p95 sayisi yok. GECTI yok.
+Playtest: `npm run dev` sonra telefonda `/?mode=arena`. Test dosyasina dokunulmadi.
 
 ## Sonraki tek adim
-Telefon touch Q6 kayit (kullanici, n>=30).
+Issue 18 basligini `v11: helpers.js tek kaynak` yap. Kapatma.

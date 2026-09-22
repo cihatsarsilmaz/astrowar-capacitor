@@ -12,4 +12,5 @@ Degil: 1.1GB native, CITV, idle win%.
 7. Canli eslesme (bot sonra) — bitti (kuyruk; sunucu yok)
 8. Bot eslesme (timeout sonrasi) — bitti (acceptBot; timeout otomatik bot mac)
 9. Playtest olcum — kismi (headless sim.place n=30; telefon p95 bilinmiyor)
-10. Telefon touch Q6 kayit (kullanici, n>=30) — sonraki
+10. Telefon touch Q6 kayit — kismi (touch/mouse ayri; `touch kayit` butonu; sayi yok)
+11. Issue 18 baslik duzelt (kapatma) — sonraki
