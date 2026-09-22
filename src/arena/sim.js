@@ -1,11 +1,14 @@
 /** AstrogameWAR Arena sim v1 — ESM */
 const TICK_HZ = 10, DT = 0.1, MATCH_S = 180, OT_S = 60, E_MAX = 10, E_START = 5, E_PER_S = 0.35, E_DOUBLE_AT = 120, RANGE_SCALE = 0.18, SPEED_SCALE = 0.08;
 export const UNITS = {
-  scout:      { energy: 2, atk: 50,   def: 10,  hull: 400,   speed: 3, range: 1.0, hedef: "yakin", yetenek: "kacinma" },
-  gunship:    { energy: 4, atk: 150,  def: 25,  hull: 1000,  speed: 3, range: 1.0, hedef: "yakin", yetenek: "asiri_sarj" },
-  hauler:     { energy: 3, atk: 5,    def: 10,  hull: 400,   speed: 5, range: 0.8, hedef: "yapi",  yetenek: "kargo_hp" },
-  cruiser:    { energy: 5, atk: 400,  def: 50,  hull: 2700,  speed: 2, range: 1.4, hedef: "yakin", yetenek: "asiri_sarj" },
-  artillery:  { energy: 6, atk: 620,  def: 200, hull: 6000,  speed: 1, range: 1.8, hedef: "yapi",  yetenek: "salvo" },
+  scout:       { energy: 2, atk: 50,   def: 10,  hull: 400,   speed: 3, range: 1.0, hedef: "yakin", yetenek: "kacinma" },
+  interceptor: { energy: 3, atk: 90,   def: 15,  hull: 500,   speed: 4, range: 1.1, hedef: "yakin", yetenek: "delici" },
+  gunship:     { energy: 4, atk: 150,  def: 25,  hull: 1000,  speed: 3, range: 1.0, hedef: "yakin", yetenek: "asiri_sarj" },
+  hauler:      { energy: 3, atk: 5,    def: 10,  hull: 400,   speed: 5, range: 0.8, hedef: "yapi",  yetenek: "kargo_hp" },
+  reaper:      { energy: 4, atk: 280,  def: 20,  hull: 800,   speed: 3, range: 1.2, hedef: "yakin", yetenek: "asiri_sarj" },
+  cruiser:     { energy: 5, atk: 400,  def: 50,  hull: 2700,  speed: 2, range: 1.4, hedef: "yakin", yetenek: "asiri_sarj" },
+  artillery:   { energy: 6, atk: 620,  def: 200, hull: 6000,  speed: 1, range: 1.8, hedef: "yapi",  yetenek: "salvo" },
+  corebreak:   { energy: 7, atk: 500,  def: 80,  hull: 3500,  speed: 1, range: 1.5, hedef: "yapi",  yetenek: "zirh_kir" },
 };
 export const ARENAS = [
   { id: 1, name: "Caylak Yorunge", min: 0, max: 199 }, { id: 2, name: "Pilot Kusagi", min: 200, max: 399 },
@@ -24,7 +27,7 @@ function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; 
 function shuffle(rng, arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function makePlayer(side, rng) {
-  const deckFull = shuffle(rng, ["scout", "gunship", "hauler", "cruiser", "artillery", "scout", "gunship", "cruiser"]);
+  const deckFull = shuffle(rng, ["scout", "interceptor", "gunship", "hauler", "reaper", "cruiser", "artillery", "corebreak"]);
   return { side, energy: E_START, energySpent: 0, hand: deckFull.slice(0, 4), deck: deckFull.slice(4), discard: [], coreHp: 4200, satL: 2400, satR: 2400, units: [], nextId: 1 };
 }
 function structures(p) {
@@ -110,7 +113,7 @@ function checkVictory(state) {
 function botThink(state, player, delayTicks, errRate) {
   if (state.tTick % delayTicks !== 0 || state.rng() < errRate) return null;
   const p = state.players[player];
-  const prefer = state.t < 50 ? ["scout", "gunship", "hauler"] : state.t < 100 ? ["cruiser", "gunship", "hauler", "scout"] : ["artillery", "cruiser", "gunship", "hauler", "scout"];
+  const prefer = state.t < 50 ? ["scout", "interceptor", "gunship", "hauler"] : state.t < 100 ? ["reaper", "cruiser", "gunship", "interceptor", "hauler", "scout"] : ["corebreak", "artillery", "cruiser", "reaper", "gunship", "hauler", "scout"];
   const cycle = prefer.find(id => p.hand.includes(id)); if (!cycle || UNITS[cycle].energy > p.energy) return null;
   return { tTick: state.tTick, player, type: "place", unitId: cycle, x: 0.2 + state.rng() * 0.6, y: player === 0 ? 0.18 + state.rng() * 0.25 : 0.57 + state.rng() * 0.25 };
 }
