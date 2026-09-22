@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createMatch, step, place, UNITS } from "./sim.js";
 import { buildReceipt } from "./receipt.js";
 import { arenaOf, seasonSoftReset } from "./ladder.js";
-import { Q6_N, Q6_P50, Q6_P95, loadLogs, recordLag, resetLogs, summarize } from "./q6.js";
+import { Q6_N, Q6_P50, Q6_P95, deviceProbe, formatReport, loadLogs, recordLag, resetLogs, saveReport, summarize, summarizeTouch } from "./q6.js";
 import { LIVE_WAIT_MS, acceptBot, acceptLive, beginSearch, cancelSearch, createQueue, queueLine, tickQueue } from "./matchmaking.js";
 
 const W = 360, H = 560;
@@ -114,12 +114,21 @@ function draw(ctx, s, selected) {
   }
 }
 
-function q6Line(stats) {
-  if (!stats.n) return `Q6 0/${Q6_N} — kart sec, alt yariya bas`;
+function q6Line(stats, label = "Q6") {
+  if (!stats.n) return `${label} 0/${Q6_N} — kart sec, alt yariya bas`;
   const p50 = stats.p50 == null ? "-" : stats.p50.toFixed(0);
   const p95 = stats.p95 == null ? "-" : stats.p95.toFixed(0);
   const flag = !stats.ready ? "OLCUM" : stats.pass ? "GECTI" : "KALDI";
-  return `Q6 ${stats.n}/${Q6_N}  p50 ${p50}ms (<${Q6_P50})  p95 ${p95}ms (<=${Q6_P95})  ${flag}`;
+  return `${label} ${stats.n}/${Q6_N}  p50 ${p50}ms (<${Q6_P50})  p95 ${p95}ms (<=${Q6_P95})  ${flag}`;
+}
+
+function pointerSrc(e) {
+  const t = e.pointerType;
+  if (t === "mouse") return "mouse";
+  if (t === "pen") return "pen";
+  if (t === "touch") return "touch";
+  if (e.touches?.length || e.changedTouches?.length) return "touch";
+  return "mouse";
 }
 
 function pointerToSim(el, e) {
@@ -154,6 +163,7 @@ export default function ArenaView() {
   const [cups, setCups] = useState(() => cupsRef.current);
   const [hint, setHint] = useState("Kart sec, kendi yarin (alt) icine bas");
   const [q6, setQ6] = useState(() => summarize(loadLogs().map((x) => x.ms)));
+  const [q6Touch, setQ6Touch] = useState(() => summarizeTouch());
   const [queue, setQueue] = useState(() => createQueue({ cups: cupsRef.current }));
   const [matchKey, setMatchKey] = useState("practice-42");
 
@@ -215,9 +225,13 @@ export default function ArenaView() {
       const ctx = canvasRef.current?.getContext("2d");
       if (ctx && s) draw(ctx, s, selectedRef.current);
       if (pendingLag.current != null) {
-        const ms = performance.now() - pendingLag.current;
+        const pending = pendingLag.current;
         pendingLag.current = null;
-        setQ6(recordLag(ms, { src: autoRef.current ? "auto" : "touch" }));
+        const ms = performance.now() - pending.t0;
+        const src = autoRef.current ? "auto" : (pending.src || "touch");
+        const dev = deviceProbe();
+        setQ6(recordLag(ms, { src, kind: dev.kind, mobile: dev.mobile }));
+        setQ6Touch(summarizeTouch());
       }
       raf = requestAnimationFrame(loop);
     };
@@ -242,7 +256,7 @@ export default function ArenaView() {
       setHint(`Enerji yetmez (${s.players[0].energy.toFixed(1)}/${cost})`);
       return false;
     }
-    pendingLag.current = performance.now();
+    pendingLag.current = { t0: performance.now(), src };
     autoRef.current = src === "auto";
     const ok = place(s, { tTick: s.tTick, player: 0, type: "place", unitId: sel, x, y });
     if (!ok) {
@@ -261,7 +275,20 @@ export default function ArenaView() {
     const el = canvasRef.current;
     if (!el) return;
     const { x, y } = pointerToSim(el, e);
-    tryPlace(x, y, "touch");
+    tryPlace(x, y, pointerSrc(e));
+  };
+
+  const onTouchReport = async () => {
+    const device = deviceProbe();
+    const touch = summarizeTouch();
+    const text = saveReport(formatReport({ all: q6, touch, device }));
+    setQ6Touch(touch);
+    try {
+      await navigator.clipboard.writeText(text);
+      setHint("Q6 touch rapor kopyalandi — telefon p95 icin n>=30 touch lazim");
+    } catch {
+      setHint(text.replace(/\n/g, " · "));
+    }
   };
 
   const runAuto = () => {
@@ -349,8 +376,11 @@ export default function ArenaView() {
       <div style={{ fontSize: 12, marginBottom: 6, color: queue.status === "matched" ? "#4ade80" : queue.status === "timeout" ? "#f87171" : "#94a3b8" }}>
         {queueLine(queue)}
       </div>
-      <div style={{ fontSize: 12, marginBottom: 8, color: q6.pass ? "#4ade80" : q6.ready ? "#f87171" : "#94a3b8" }}>
-        {q6Line(q6)}
+      <div style={{ fontSize: 12, marginBottom: 4, color: q6.pass ? "#4ade80" : q6.ready ? "#f87171" : "#94a3b8" }}>
+        {q6Line(q6, "Q6 all")}
+      </div>
+      <div style={{ fontSize: 12, marginBottom: 8, color: q6Touch.pass ? "#4ade80" : q6Touch.ready ? "#f87171" : "#94a3b8" }}>
+        {q6Line(q6Touch, "Q6 touch")}
       </div>
       {hpRow("RAKIP", hp.foe, "#fb923c")}
       <canvas
@@ -402,7 +432,8 @@ export default function ArenaView() {
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
         <button onClick={runAuto} style={{ padding: "8px 12px", background: "#334155", color: "#e2e8f0", border: 0, borderRadius: 8 }}>Q6 auto x{Q6_N}</button>
-        <button onClick={() => setQ6(resetLogs())} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>sifirla</button>
+        <button onClick={onTouchReport} style={{ padding: "8px 12px", background: "#1d4ed8", color: "#dbeafe", border: 0, borderRadius: 8 }}>touch kayit</button>
+        <button onClick={() => { setQ6(resetLogs()); setQ6Touch(summarize([])); }} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>sifirla</button>
         <button onClick={onSeasonReset} style={{ padding: "8px 12px", background: "#0e7490", color: "#ecfeff", border: 0, borderRadius: 8 }}>sezon reset</button>
         <button onClick={onLiveSearch} style={{ padding: "8px 12px", background: "#14532d", color: "#bbf7d0", border: 0, borderRadius: 8 }}>canli esles</button>
         <button onClick={onLiveCancel} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>iptal</button>
