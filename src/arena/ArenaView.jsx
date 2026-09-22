@@ -34,6 +34,7 @@ function hud(s) {
     t: s.t,
     phase: s.phase,
     energy: me.energy,
+    foeEnergy: fo.energy,
     hand: [...me.hand],
     me: { core: me.coreHp, satL: me.satL, satR: me.satR },
     foe: { core: fo.coreHp, satL: fo.satL, satR: fo.satR },
@@ -133,6 +134,17 @@ function draw(ctx, s, selected) {
     }
   }
 
+  const foeE = s.players[1].energy;
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(W - 166, 32, 160, 22);
+  ctx.fillStyle = "#fed7aa";
+  ctx.font = "bold 13px sans-serif";
+  ctx.fillText(`E ${foeE.toFixed(1)}/10`, W - 162, 48);
+  for (let i = 0; i < 10; i++) {
+    ctx.fillStyle = i < Math.floor(foeE) ? "#fb923c" : i < foeE ? "#fdba74" : "#1e293b";
+    ctx.fillRect(W - 94 + i * 8, 38, 6, 10);
+  }
+
   const e = s.players[0].energy;
   ctx.fillStyle = "#0f172a";
   ctx.fillRect(6, H / 2 + 8, 160, 22);
@@ -195,6 +207,7 @@ export default function ArenaView() {
   const [done, setDone] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [energy, setEnergy] = useState(5);
+  const [foeEnergy, setFoeEnergy] = useState(5);
   const [hp, setHp] = useState({ me: { core: 4200, satL: 2400, satR: 2400 }, foe: { core: 4200, satL: 2400, satR: 2400 } });
   const [cups, setCups] = useState(() => cupsRef.current);
   const [hint, setHint] = useState("Kart sec, kendi yarin (alt) icine bas");
@@ -232,6 +245,7 @@ export default function ArenaView() {
     const start = hud(stateRef.current);
     setHand(start.hand);
     setEnergy(start.energy);
+    setFoeEnergy(start.foeEnergy);
     setHp({ me: start.me, foe: start.foe });
     setClock(clockText(stateRef.current));
     setCoreOn({ me: false, foe: false });
@@ -252,6 +266,7 @@ export default function ArenaView() {
         const snap = hud(s);
         setHand(snap.hand);
         setEnergy(snap.energy);
+        setFoeEnergy(snap.foeEnergy);
         setHp({ me: snap.me, foe: snap.foe });
         setClock(clockText(s));
         setCoreOn(snap.coreHot);
@@ -444,6 +459,17 @@ export default function ArenaView() {
         </div>
       )}
       {hpRow("RAKIP", hp.foe, "#fb923c")}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 0 6px", fontSize: 13, fontWeight: 700, color: "#fdba74" }}>
+        <span>Rakip E {foeEnergy.toFixed(1)}/10</span>
+        <span style={{ display: "flex", gap: 3 }}>
+          {Array.from({ length: 10 }, (_, i) => (
+            <span key={i} style={{
+              width: 10, height: 14, borderRadius: 2,
+              background: i < Math.floor(foeEnergy) ? "#fb923c" : i < foeEnergy ? "#fdba74" : "#1e293b",
+            }} />
+          ))}
+        </span>
+      </div>
       <canvas
         ref={canvasRef}
         width={W}
