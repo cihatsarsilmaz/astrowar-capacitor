@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 03:28 TR
+Commit: 050b78f29fd82d4da4f3fb7074202332e004dc5e
+Issue18: kismi
+Sim: 8 birim; interceptor delici, reaper asiri_sarj, corebreak zirh_kir
+UI: HUD + receipt + Q6 onceki tur; el UNITS map ile 3 yeni karti gosterir
+Bakis:
+Issue 18 kopya silindi, helpers import mainde; issue kapatilmadi.
+Kuyruk 5 uygulandi: 8 kart deste + bot tercih.
+Sonraki tek adim: Lig sezon reset ladder.js UI bag.
+Sonraki: Lig sezon reset `ladder.js` UI bag
+
 ## Tur 2026-09-22 02:16 TR
 Commit: 5373d5c92e34331c0cc74e2479ae2f38a06ae97a
 Issue18: kismi
