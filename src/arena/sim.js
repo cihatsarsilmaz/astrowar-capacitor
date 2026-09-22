@@ -150,7 +150,7 @@ function botThink(state, player, delayTicks, errRate) {
 }
 export function createMatch(seed, opts = {}) {
   const rng = mulberry32(seed >>> 0);
-  const bots = Array.isArray(opts.bots) ? opts.bots.slice() : [0, 1];
+  const bots = Array.isArray(opts.bots) ? opts.bots.slice() : [1];
   return { t: 0, tTick: 0, phase: "main", otStart: null, winner: null, seed: seed >>> 0, rng, bots, players: [makePlayer(0, rng), makePlayer(1, rng)], events: [], extraCmds: [] };
 }
 export function step(state) {
@@ -165,4 +165,4 @@ export function step(state) {
   acquireTargets(state); moveOrHold(state); applyDamage(state, fire(state)); removeDead(state); structureRetaliate(state); removeDead(state); cargoPulse(state); checkVictory(state);
   state.t = Math.round((state.t + DT) * 1000) / 1000; state.tTick += 1; return state;
 }
-export function runMatch(seed) { const s = createMatch(seed); const maxTicks = (MATCH_S + OT_S) * TICK_HZ + 2; for (let i = 0; i < maxTicks && s.phase !== "done"; i++) step(s); if (s.phase !== "done") checkVictory(s); return { seed: s.seed, winner: s.winner, tEnd: s.t, core: [s.players[0].coreHp, s.players[1].coreHp], energySpent: [s.players[0].energySpent, s.players[1].energySpent] }; }
+export function runMatch(seed) { const s = createMatch(seed, { bots: [0, 1] }); const maxTicks = (MATCH_S + OT_S) * TICK_HZ + 2; for (let i = 0; i < maxTicks && s.phase !== "done"; i++) step(s); if (s.phase !== "done") checkVictory(s); return { seed: s.seed, winner: s.winner, tEnd: s.t, core: [s.players[0].coreHp, s.players[1].coreHp], energySpent: [s.players[0].energySpent, s.players[1].energySpent] }; }
