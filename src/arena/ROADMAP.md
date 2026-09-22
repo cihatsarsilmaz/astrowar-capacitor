@@ -14,4 +14,5 @@ Degil: 1.1GB native, CITV, idle win%.
 9. Playtest olcum — kismi (headless sim.place n=30; telefon p95 bilinmiyor)
 10. Telefon touch Q6 kayit — kismi (touch/mouse ayri; `touch kayit` butonu; sayi yok)
 11. Issue 18 baslik duzelt — bitti (`v11: helpers.js tek kaynak`; kapatilmadi)
-12. Issue 18 govde durum notu (eski snippet kirp; kapatma) — sonraki
+12. Issue 18 govde durum notu — bitti (snippet kirpildi; kapatilmadi)
+13. Telefon touch Q6 n>=30 rapor — sonraki (kullanici; GECTI yok)

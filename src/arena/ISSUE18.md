@@ -1,14 +1,11 @@
 # Issue 18 incremental
 
-Durum 2026-09-22 07:32 TR: Issue ACIK. Kapatma.
-Baslik artik `v11: helpers.js tek kaynak` (eski `@Collaborators addpeople`).
-Gövde hâlâ eski snippet — sonraki tur.
+Durum 2026-09-22 07:33 TR: Issue ACIK. Kapatma.
+Baslik: `v11: helpers.js tek kaynak`.
+Govde: guncel durum notu. Eski helpers snippet yok.
 
-Main: helpers import + HUD + receipt + Q6 + 8 birim + lig + kuyruk + bot + headless + touch kayit UI.
-fmt/labDisc/storageCap govde kopyasi yok. production JSX te.
-
-Bu tur (kuyruk 11): Yalniz baslik. Kod yok.
-Playtest: `npm run dev` sonra `/?mode=arena`. Test dosyasina dokunulmadi.
+Main: helpers import + wrapper; production JSX te.
+Bu tur (kuyruk 12): Yalniz issue govdesi. Kod yok.
 
 ## Sonraki tek adim
-Issue 18 govdesine guncel durum notu. Kapatma.
+Telefon touch Q6 n>=30 rapor (kullanici). Issue kapatma.
