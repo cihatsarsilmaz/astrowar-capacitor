@@ -9,4 +9,6 @@ Degil: 1.1GB native, CITV, idle win%.
 15. Cekirdek AKTIF HUD — bitti
 16. Receipt replay (kupa yazilmaz) — bitti
 17. Saha birim HP + ad — bitti
-18. Rakip enerji HUD — bitti (bu tur)
+18. Rakip enerji HUD — bitti
+19. ArenaView kesik dosya onar + alt yari dokunus + el HP/E — bitti (231fc84)
+20. postArenaReceipt bag (sunucu mode=arena var)

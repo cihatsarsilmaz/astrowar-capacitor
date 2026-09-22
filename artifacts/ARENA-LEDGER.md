@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 11:03 TR
+Commit: 231fc84223fcf979fd8efd019c1299a3a444591c
+Issue18: kismi
+Sim: 8 birim ayni; kacinma/kargo_hp formulsuz
+UI: ArenaView bilesen geri; alt yari dokunus +%12 snap; el E+HP
+Bakis:
+a65c6f0 ArenaView'i 73 satira kestiyti; export default yoktu — geri yuklendi.
+Issue 18 kopya yok; production JSX kilit; kapatilmadi.
+Sonraki tek adim: ArenaView buildReceipt sonrasi postArenaReceipt (mode=arena).
+Sonraki: postArenaReceipt bag (sunucu mode=arena mevcut)
+
 ## Tur 2026-09-22 09:10 TR
 Commit: 5bb2f98d3bb99025fec51f9805c079b39192b8bb
 Issue18: kismi
