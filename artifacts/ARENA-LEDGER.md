@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 04:27 TR
+Commit: de62ba8359a23144af97acea2dd3f15040e90aed
+Issue18: kismi
+Sim: 8 birim; interceptor delici, reaper asiri_sarj, corebreak zirh_kir
+UI: Lig satir + sezon reset butonu; kupa localStorage; receipt before=kupa
+Bakis:
+Issue 18 kopya silindi, helpers import mainde; issue kapatilmadi.
+Kuyruk 6 uygulandi: ladder.js seasonSoftReset + arenaOf ArenaView.
+Sonraki tek adim: Canli eslesme (bot sonra).
+Sonraki: Canli eslesme (bot sonra)
+
 ## Tur 2026-09-22 03:28 TR
 Commit: 050b78f29fd82d4da4f3fb7074202332e004dc5e
 Issue18: kismi
