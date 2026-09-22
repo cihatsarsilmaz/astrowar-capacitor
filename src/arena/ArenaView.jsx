@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createMatch, step, place, UNITS } from "./sim.js";
+import { createMatch, step, place, UNITS, MATCH_S, OT_S, E_DOUBLE_AT } from "./sim.js";
 import { buildReceipt } from "./receipt.js";
 import { arenaOf, seasonSoftReset } from "./ladder.js";
 import { Q6_N, Q6_P50, Q6_P95, deviceProbe, formatReport, loadLogs, recordLag, resetLogs, saveReport, summarize, summarizeTouch } from "./q6.js";
@@ -45,6 +45,20 @@ function bar(ctx, x, y, w, h, ratio, fill, back) {
   ctx.strokeRect(x, y, w, h);
 }
 
+function clockText(s) {
+  if (!s) return `0:00 / ${Math.floor(MATCH_S / 60)}:00`;
+  if (s.phase === "done") return "BITTI";
+  if (s.phase === "ot") {
+    const left = Math.max(0, OT_S - (s.t - (s.otStart || MATCH_S)));
+    return `OT ${Math.floor(left)}s  x2 enerji`;
+  }
+  const left = Math.max(0, MATCH_S - s.t);
+  const m = Math.floor(left / 60);
+  const sec = Math.floor(left % 60).toString().padStart(2, "0");
+  const dbl = s.t >= E_DOUBLE_AT ? "  x2" : "";
+  return `${m}:${sec}${dbl}`;
+}
+
 function draw(ctx, s, selected) {
   ctx.fillStyle = "#0b1220";
   ctx.fillRect(0, 0, W, H);
@@ -63,6 +77,9 @@ function draw(ctx, s, selected) {
   ctx.fillText("RAKIP", 8, 28);
   ctx.fillStyle = "rgba(34, 211, 238, 0.95)";
   ctx.fillText("SEN — alt yariya bas", 8, H - 10);
+  ctx.fillStyle = "#f8fafc";
+  ctx.font = "bold 14px sans-serif";
+  ctx.fillText(clockText(s), W / 2 - 48, 22);
 
   const map = (x, y) => [x * W, (1 - y) * H];
   const structs = (p, color) => {
@@ -166,6 +183,7 @@ export default function ArenaView() {
   const [q6Touch, setQ6Touch] = useState(() => summarizeTouch());
   const [queue, setQueue] = useState(() => createQueue({ cups: cupsRef.current }));
   const [matchKey, setMatchKey] = useState("practice-42");
+  const [clock, setClock] = useState("3:00");
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   useEffect(() => { cupsRef.current = cups; }, [cups]);
@@ -195,6 +213,7 @@ export default function ArenaView() {
     setHand(start.hand);
     setEnergy(start.energy);
     setHp({ me: start.me, foe: start.foe });
+    setClock(clockText(stateRef.current));
     setDone(null);
     setReceipt(null);
     let acc = 0;
@@ -213,6 +232,7 @@ export default function ArenaView() {
         setHand(snap.hand);
         setEnergy(snap.energy);
         setHp({ me: snap.me, foe: snap.foe });
+        setClock(clockText(s));
         if (s.phase === "done") {
           setDone(s.winner);
           const rec = buildReceipt(s, [cupsRef.current, 0]);
@@ -370,6 +390,9 @@ export default function ArenaView() {
   return (
     <div style={{ background: "#020617", color: "#e2e8f0", minHeight: "100vh", padding: 12, fontFamily: "sans-serif" }}>
       <div style={{ fontSize: 12, marginBottom: 6 }}>Arena Faz-1 · ?mode=arena</div>
+      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6, color: clock.includes("OT") ? "#fb923c" : clock.includes("x2") ? "#facc15" : "#e2e8f0" }}>
+        {clock} · 180sn + 60sn OT · cift enerji {E_DOUBLE_AT}s
+      </div>
       <div style={{ fontSize: 12, marginBottom: 6, color: "#67e8f9" }}>
         Lig {lig.name} (#{lig.id}) · kupa {cups} · reset max(400, floor(kupa*0.6))
       </div>
