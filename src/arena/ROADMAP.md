@@ -9,4 +9,5 @@ Degil: 1.1GB native, CITV, idle win%.
 4. Q6 playtest notu — bitti (telefon p95 olcumu yok)
 5. interceptor, reaper, corebreak — bitti
 6. Lig UI — bitti (sezon reset + arenaOf)
-7. Canli eslesme (bot sonra) — bu tur sonraki
+7. Canli eslesme (bot sonra) — bitti (kuyruk; sunucu yok; timeout bot acmaz)
+8. Bot eslesme (timeout sonrasi) — bu tur sonraki
