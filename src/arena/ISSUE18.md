@@ -1,15 +1,15 @@
 # Issue 18 incremental
 
-Durum 2026-09-22 06:09 TR: Issue ACIK. Kapatma.
+Durum 2026-09-22 07:17 TR: Issue ACIK. Kapatma.
 
-Main: helpers import + ArenaView HUD + receipt + Q6 notu + 8 birim sim + lig UI + canli kuyruk + timeout bot.
+Main: helpers import + ArenaView HUD + receipt + Q6 notu + 8 birim sim + lig UI + canli kuyruk + timeout bot + headless playtest.
 fmt/labDisc/storageCap govde kopyasi yok. production JSX te.
 
-Bu tur (kuyruk 8): Bot eslesme (timeout sonrasi).
-- `acceptBot` — matched + opponent.kind=bot
-- ArenaView: timeout olunca otomatik bot mac; `bot esles` butonu
-- Issue govdesi hâlâ eski snippet + `@Collaborators addpeople` basligi.
+Bu tur (kuyruk 9): Playtest olcum.
+- `src/arena/playtest.js` — `sim.place` n=30 headless
+- `npm run arena:q6`
+- Headless p50/p95 ~0ms (CPU). Telefon touch p95 bilinmiyor. GECTI yok.
 Playtest: `npm run dev` sonra `/?mode=arena`. Test dosyasina dokunulmadi.
 
 ## Sonraki tek adim
-Playtest olcum (telefon p95).
+Telefon touch Q6 kayit (kullanici, n>=30).

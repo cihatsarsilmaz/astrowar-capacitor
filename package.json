@@ -9,6 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "arena:q6": "node src/arena/playtest.js",
     "deploy:vercel": "npm run build && npx vercel --prod",
     "deploy:netlify": "npm run build && npx netlify-cli deploy --prod --dir=dist",
     "deploy:gh": "npm run build && npx gh-pages -d dist",
