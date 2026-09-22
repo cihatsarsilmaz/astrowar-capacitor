@@ -1,23 +1,12 @@
 # ARENA LEDGER — AstrogameWAR only
 
-## Tur 2026-09-22 07:35 TR
-Commit: 109e7855cb6dfbf19f6cdcce7335803b78039bce
+## Tur 2026-09-22 07:41 TR
+Commit: f6f1e69777e532b40d01e4725e8420ffdaa0569d
 Issue18: kismi
-Sim: 8 birim; MATCH_S/OT_S/E_DOUBLE_AT export
-UI: Mac saati + OT + cift enerji HUD (canvas + satir)
+Sim: 8 birim; cekirdek +30% (sats down) zaten vardı
+UI: Cekirdek AKTIF halka/yazi + replay seed (kupa yazilmaz)
 Bakis:
 Telefon Q6 bloklu; sayi uydurulmadi.
-Kuyruk 14: 180sn + 60sn OT + 120s x2 enerji gorunur.
-Sonraki tek adim: Telefon touch Q6 n>=30 rapor.
-Sonraki: Telefon touch Q6 n>=30 rapor (kullanici)
-
-## Tur 2026-09-22 07:33 TR
-Commit: feab897adaf5dbd0a5492ff2fc4b4db3ad4e464f
-Issue18: kismi
-Sim: 8 birim
-UI: Degisiklik yok (govde turu)
-Bakis:
-Issue 18 govde guncellendi, eski snippet kirpildi; kapatilmadi.
-production JSX te; telefon p95 bilinmiyor.
+Iki adim: cekirdek HUD + receipt replay mainde.
 Sonraki tek adim: Telefon touch Q6 n>=30 rapor.
 Sonraki: Telefon touch Q6 n>=30 rapor (kullanici)
