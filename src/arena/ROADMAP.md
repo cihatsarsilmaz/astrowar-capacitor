@@ -12,6 +12,6 @@ Degil: 1.1GB native, CITV, idle win%.
 18. Rakip enerji HUD — bitti
 19. ArenaView kesik dosya onar + alt yari dokunus + el HP/E — bitti (231fc84)
 20. postArenaReceipt bag — bitti (buildReceipt sonrasi; url yoksa local)
-21. Q6 — playtest notu — kismi (headless 2026-09-22 13:18 TR n=30 p50=0 p95=0; telefon yok)
-22. 8 birim + kacinma/kargo_hp formul — bitti (99e6884; dodge %20, kargo +8/tick menzil)
-23. Lig sezon reset ladder.js UI bag — acik
+21. Q6 — playtest notu — kismi (headless var; telefon yok)
+22. 8 birim + kacinma/kargo_hp formul — bitti (99e6884)
+23. Lig sezon reset ladder.js UI bag — bitti (bb27c62; kuyruk cups + lig onizleme)
