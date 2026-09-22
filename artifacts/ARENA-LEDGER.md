@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 05:21 TR
+Commit: 2e55d88d6349ff0e0842eb71afc01510a5fb68a3
+Issue18: kismi
+Sim: 8 birim; interceptor delici, reaper asiri_sarj, corebreak zirh_kir
+UI: Canli kuyruk satiri + canli esles/iptal/lokal peer; timeout bot acmaz
+Bakis:
+Issue 18 kopya silindi, helpers import mainde; issue kapatilmadi.
+Kuyruk 7 uygulandi: matchmaking.js + ArenaView bag (sunucu yok).
+Sonraki tek adim: Bot eslesme (timeout sonrasi).
+Sonraki: Bot eslesme (timeout sonrasi)
+
 ## Tur 2026-09-22 04:27 TR
 Commit: de62ba8359a23144af97acea2dd3f15040e90aed
 Issue18: kismi
