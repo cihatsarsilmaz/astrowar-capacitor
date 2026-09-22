@@ -1,4 +1,4 @@
-/** Canli eslesme kuyrugu — bot sonra. Sunucu yoksa yerel bekler, timeout bot acmaz. */
+/** Canli eslesme kuyrugu. Timeout sonrasi bot. Sunucu yoksa yerel bekler. */
 export const LIVE_WAIT_MS = 8000;
 
 export function createQueue({ cups = 0 } = {}) {
@@ -44,15 +44,28 @@ export function acceptLive(q, { seed, opponentId }) {
   };
 }
 
+export function acceptBot(q, { seed } = {}) {
+  const n = Number(seed);
+  const safe = Number.isFinite(n) ? (n >>> 0) : ((q.startedAt || Date.now()) >>> 0);
+  return {
+    ...q,
+    status: "matched",
+    seed: safe,
+    opponent: { kind: "bot", id: "bot" },
+    waitMs: q.waitMs || LIVE_WAIT_MS,
+  };
+}
+
 export function cancelSearch(q) {
   return { ...q, status: "canceled", seed: null, opponent: null, waitMs: 0 };
 }
 
 export function queueLine(q) {
-  if (!q || q.status === "idle") return "Canli eslesme kapali — bot sonra";
+  if (!q || q.status === "idle") return "Canli eslesme kapali — timeout sonrasi bot";
   if (q.status === "searching") return `Kuyruk ${Math.floor((q.waitMs || 0) / 1000)}s / ${LIVE_WAIT_MS / 1000}s`;
+  if (q.status === "matched" && q.opponent?.kind === "bot") return `Eslesme bot seed=${q.seed}`;
   if (q.status === "matched") return `Eslesme live seed=${q.seed} vs ${q.opponent?.id || "peer"}`;
-  if (q.status === "timeout") return "Rakip yok — bot sonra";
+  if (q.status === "timeout") return "Rakip yok — bot esles";
   if (q.status === "canceled") return "Kuyruk iptal";
   return String(q.status);
 }
