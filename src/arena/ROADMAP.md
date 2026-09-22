@@ -12,6 +12,6 @@ Degil: 1.1GB native, CITV, idle win%.
 18. Rakip enerji HUD — bitti
 19. ArenaView kesik dosya onar + alt yari dokunus + el HP/E — bitti (231fc84)
 20. postArenaReceipt bag — bitti (buildReceipt sonrasi; url yoksa local)
-21. Q6 — playtest notu (kullanici `npm run dev ?mode=arena`, telefon n>=30)
-22. 8 birimin kalan 3u (interceptor, reaper, corebreak) sim e
+21. Q6 — playtest notu — kismi (headless 2026-09-22 13:18 TR n=30 p50=0 p95=0; telefon yok)
+22. 8 birimin kalan 3u (interceptor, reaper, corebreak) sim e — istatistik var; kacinma/kargo_hp formulsuz
 23. Lig sezon reset ladder.js UI bag — UI var; sim yetenek formulsuz
