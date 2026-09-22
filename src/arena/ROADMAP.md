@@ -8,5 +8,5 @@ Degil: 1.1GB native, CITV, idle win%.
 14. Mac saati + OT + cift enerji HUD — bitti
 15. Cekirdek AKTIF HUD — bitti
 16. Receipt replay (kupa yazilmaz) — bitti
-17. Saha birim HP + ad — bitti (bu tur)
-18. Rakip enerji HUD — sonraki
+17. Saha birim HP + ad — bitti
+18. Rakip enerji HUD — bitti (bu tur)
