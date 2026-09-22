@@ -1,10 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { createMatch, step, place, UNITS } from "./sim.js";
 import { buildReceipt } from "./receipt.js";
+import { arenaOf, seasonSoftReset } from "./ladder.js";
 import { Q6_N, Q6_P50, Q6_P95, loadLogs, recordLag, resetLogs, summarize } from "./q6.js";
 
 const W = 360, H = 560;
 const OWN_MAX_Y = 0.5;
+const CUP_KEY = "astrowar-arena-trophies";
+
+function loadCups() {
+  try {
+    const n = Number(localStorage.getItem(CUP_KEY));
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveCups(n) {
+  const v = Math.max(0, Math.floor(n));
+  try { localStorage.setItem(CUP_KEY, String(v)); } catch { /* playtest */ }
+  return v;
+}
 
 function hud(s) {
   const me = s.players[0], fo = s.players[1];
@@ -121,16 +138,19 @@ export default function ArenaView() {
   const pendingLag = useRef(null);
   const selectedRef = useRef(null);
   const autoRef = useRef(false);
+  const cupsRef = useRef(loadCups());
   const [hand, setHand] = useState([]);
   const [selected, setSelected] = useState(null);
   const [done, setDone] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [energy, setEnergy] = useState(5);
   const [hp, setHp] = useState({ me: { core: 4200, satL: 2400, satR: 2400 }, foe: { core: 4200, satL: 2400, satR: 2400 } });
+  const [cups, setCups] = useState(() => cupsRef.current);
   const [hint, setHint] = useState("Kart sec, kendi yarin (alt) icine bas");
   const [q6, setQ6] = useState(() => summarize(loadLogs().map((x) => x.ms)));
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
+  useEffect(() => { cupsRef.current = cups; }, [cups]);
 
   useEffect(() => {
     stateRef.current = createMatch(42);
@@ -154,7 +174,14 @@ export default function ArenaView() {
         setHand(snap.hand);
         setEnergy(snap.energy);
         setHp({ me: snap.me, foe: snap.foe });
-        if (s.phase === "done") { setDone(s.winner); setReceipt(buildReceipt(s)); }
+        if (s.phase === "done") {
+          setDone(s.winner);
+          const rec = buildReceipt(s, [cupsRef.current, 0]);
+          setReceipt(rec);
+          const next = saveCups(rec.trophies.after[0]);
+          cupsRef.current = next;
+          setCups(next);
+        }
       }
       const ctx = canvasRef.current?.getContext("2d");
       if (ctx && s) draw(ctx, s, selectedRef.current);
@@ -229,6 +256,15 @@ export default function ArenaView() {
     tick();
   };
 
+  const onSeasonReset = () => {
+    const before = cupsRef.current;
+    const next = saveCups(seasonSoftReset(before));
+    cupsRef.current = next;
+    setCups(next);
+    const a = arenaOf(next);
+    setHint(`Sezon reset ${before} → ${next} · ${a.name} (#${a.id})`);
+  };
+
   const hpRow = (label, pack, color) => (
     <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, marginBottom: 4 }}>
       <span style={{ width: 44, color }}>{label}</span>
@@ -243,9 +279,14 @@ export default function ArenaView() {
     </div>
   );
 
+  const lig = arenaOf(cups);
+
   return (
     <div style={{ background: "#020617", color: "#e2e8f0", minHeight: "100vh", padding: 12, fontFamily: "sans-serif" }}>
       <div style={{ fontSize: 12, marginBottom: 6 }}>Arena Faz-1 · ?mode=arena</div>
+      <div style={{ fontSize: 12, marginBottom: 6, color: "#67e8f9" }}>
+        Lig {lig.name} (#{lig.id}) · kupa {cups} · reset max(400, floor(kupa*0.6))
+      </div>
       <div style={{ fontSize: 12, marginBottom: 8, color: q6.pass ? "#4ade80" : q6.ready ? "#f87171" : "#94a3b8" }}>
         {q6Line(q6)}
       </div>
@@ -300,6 +341,7 @@ export default function ArenaView() {
       <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
         <button onClick={runAuto} style={{ padding: "8px 12px", background: "#334155", color: "#e2e8f0", border: 0, borderRadius: 8 }}>Q6 auto x{Q6_N}</button>
         <button onClick={() => setQ6(resetLogs())} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>sifirla</button>
+        <button onClick={onSeasonReset} style={{ padding: "8px 12px", background: "#0e7490", color: "#ecfeff", border: 0, borderRadius: 8 }}>sezon reset</button>
       </div>
       {done !== null && (
         <div style={{ marginTop: 12, fontSize: 12 }}>
@@ -307,7 +349,7 @@ export default function ArenaView() {
           {receipt && (
             <div style={{ marginTop: 6, color: "#94a3b8" }}>
               receipt mode={receipt.mode} seed={receipt.seed} tEnd={receipt.tEnd}
-              {" "}kupa {receipt.trophies.after[0]}→arena {receipt.trophies.arena[0]}
+              {" "}kupa {receipt.trophies.before[0]}→{receipt.trophies.after[0]} arena {receipt.trophies.arena[0]}
             </div>
           )}
         </div>
