@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 13:18 TR
+Commit: 03c47219a86373f8b1a4db9762e31afc63c83a63
+Issue18: kismi
+Sim: 8 birim ayni; kacinma/kargo_hp formulsuz
+UI: Q6 notu guncel; telefon touch yok
+Bakis:
+Issue 18 kopya yok; production JSX kilit; kapatilmadi.
+Q6 headless n=30 p50=0 p95=0 — telefon sayilmaz, GECTI yok.
+Sonraki tek adim: kacinma/kargo_hp formul (sim).
+Sonraki: kacinma/kargo_hp formul (sim)
+
 ## Tur 2026-09-22 12:22 TR
 Commit: df53d717e9e13abf168b19ac182c65e0113648d1
 Issue18: kismi
