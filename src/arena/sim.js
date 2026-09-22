@@ -1,7 +1,7 @@
 /** AstrogameWAR Arena sim v1 — ESM */
 export const TICK_HZ = 10, DT = 0.1, MATCH_S = 180, OT_S = 60, E_MAX = 10, E_START = 5, E_PER_S = 0.35, E_DOUBLE_AT = 120, RANGE_SCALE = 0.18, SPEED_SCALE = 0.08;
 export const UNITS = {
-  scout:       { energy: 2, atk: 50,   def: 10,  hull: 400,   speed: 3, range: 1.0, hedef: "yakin", yetenek: "kacinma" },
+  scout:       { energy: 2, atk: 50,   def: 15,  hull: 400,   speed: 3, range: 1.0, hedef: "yakin", yetenek: "kacinma" },
   interceptor: { energy: 3, atk: 90,   def: 15,  hull: 500,   speed: 4, range: 1.1, hedef: "yakin", yetenek: "delici" },
   gunship:     { energy: 4, atk: 150,  def: 25,  hull: 1000,  speed: 3, range: 1.0, hedef: "yakin", yetenek: "asiri_sarj" },
   hauler:      { energy: 3, atk: 5,    def: 10,  hull: 400,   speed: 5, range: 0.8, hedef: "yapi",  yetenek: "kargo_hp" },
@@ -71,6 +71,7 @@ function moveOrHold(state) {
     u.x = Math.max(0.02, Math.min(0.98, u.x)); u.y = Math.max(0.02, Math.min(0.98, u.y));
   }
 }
+const SAT_MAX = 2400, CORE_MAX = 4200, KACINMA_P = 0.2, KARGO_HEAL = 8;
 function dmgFormula(atk, defv, yetenek, firedOnce, targetIsStruct) { let raw = atk; if (yetenek === "asiri_sarj" && !firedOnce) raw *= 1.15; let useDef = defv; if (yetenek === "delici") useDef *= 0.5; if (yetenek === "zirh_kir" && targetIsStruct) raw *= 1.25; if (yetenek === "salvo" && targetIsStruct) raw *= 1.10; return Math.max(1, raw - useDef * 0.25); }
 function fire(state) {
   const hits = [];
@@ -84,8 +85,38 @@ function fire(state) {
 }
 function applyDamage(state, hits) {
   for (const h of hits) {
-    if (h.tgt.type === "unit") { if (h.tgt.ref.hp > 0) h.tgt.ref.hp -= h.dmg; }
-    else { const foe = enemyOf(state, h.player); if (h.tgt.kind === "satL") foe.satL = Math.max(0, foe.satL - h.dmg); if (h.tgt.kind === "satR") foe.satR = Math.max(0, foe.satR - h.dmg); if (h.tgt.kind === "core") foe.coreHp = Math.max(0, foe.coreHp - h.dmg); }
+    if (h.tgt.type === "unit") {
+      const ref = h.tgt.ref;
+      if (!ref || ref.hp <= 0) continue;
+      if (UNITS[ref.unit].yetenek === "kacinma" && state.rng() < KACINMA_P) {
+        state.events.push({ t: state.t, type: "dodge", player: ref.side, unitId: ref.unit, id: ref.id });
+        continue;
+      }
+      ref.hp -= h.dmg;
+    } else {
+      const foe = enemyOf(state, h.player);
+      if (h.tgt.kind === "satL") foe.satL = Math.max(0, foe.satL - h.dmg);
+      if (h.tgt.kind === "satR") foe.satR = Math.max(0, foe.satR - h.dmg);
+      if (h.tgt.kind === "core") foe.coreHp = Math.max(0, foe.coreHp - h.dmg);
+    }
+  }
+}
+function cargoPulse(state) {
+  for (const p of state.players) {
+    for (const u of p.units) {
+      if (u.hp <= 0 || UNITS[u.unit].yetenek !== "kargo_hp") continue;
+      const range = UNITS[u.unit].range * RANGE_SCALE;
+      let best = null, bestD = 1e9;
+      for (const s of structures(p)) {
+        if (s.hp <= 0) continue;
+        const d = dist(u, s);
+        if (d <= range && d < bestD) { bestD = d; best = s; }
+      }
+      if (!best) continue;
+      if (best.kind === "satL") p.satL = Math.min(SAT_MAX, p.satL + KARGO_HEAL);
+      else if (best.kind === "satR") p.satR = Math.min(SAT_MAX, p.satR + KARGO_HEAL);
+      else if (best.kind === "core") p.coreHp = Math.min(CORE_MAX, p.coreHp + KARGO_HEAL);
+    }
   }
 }
 function removeDead(state) { for (const p of state.players) p.units = p.units.filter(u => u.hp > 0); }
@@ -124,7 +155,7 @@ export function step(state) {
   const b0 = botThink(state, 0, 7, 0.25), b1 = botThink(state, 1, 7, 0.25);
   if (b0) place(state, b0); if (b1) place(state, b1);
   regenEnergy(state.players[0], state.t); regenEnergy(state.players[1], state.t);
-  acquireTargets(state); moveOrHold(state); applyDamage(state, fire(state)); removeDead(state); structureRetaliate(state); removeDead(state); checkVictory(state);
+  acquireTargets(state); moveOrHold(state); applyDamage(state, fire(state)); removeDead(state); structureRetaliate(state); removeDead(state); cargoPulse(state); checkVictory(state);
   state.t = Math.round((state.t + DT) * 1000) / 1000; state.tTick += 1; return state;
 }
 export function runMatch(seed) { const s = createMatch(seed); const maxTicks = (MATCH_S + OT_S) * TICK_HZ + 2; for (let i = 0; i < maxTicks && s.phase !== "done"; i++) step(s); if (s.phase !== "done") checkVictory(s); return { seed: s.seed, winner: s.winner, tEnd: s.t, core: [s.players[0].coreHp, s.players[1].coreHp], energySpent: [s.players[0].energySpent, s.players[1].energySpent] }; }
