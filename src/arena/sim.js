@@ -113,9 +113,14 @@ function cargoPulse(state) {
         if (d <= range && d < bestD) { bestD = d; best = s; }
       }
       if (!best) continue;
-      if (best.kind === "satL") p.satL = Math.min(SAT_MAX, p.satL + KARGO_HEAL);
-      else if (best.kind === "satR") p.satR = Math.min(SAT_MAX, p.satR + KARGO_HEAL);
-      else if (best.kind === "core") p.coreHp = Math.min(CORE_MAX, p.coreHp + KARGO_HEAL);
+      const before = best.kind === "satL" ? p.satL : best.kind === "satR" ? p.satR : p.coreHp;
+      const cap = best.kind === "core" ? CORE_MAX : SAT_MAX;
+      const after = Math.min(cap, before + KARGO_HEAL);
+      const heal = after - before;
+      if (best.kind === "satL") p.satL = after;
+      else if (best.kind === "satR") p.satR = after;
+      else p.coreHp = after;
+      if (heal > 0) state.events.push({ t: state.t, type: "kargo_hp", player: p.side, unitId: u.unit, id: u.id, kind: best.kind, heal });
     }
   }
 }

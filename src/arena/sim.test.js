@@ -81,6 +81,29 @@ describe("kupa", () => {
   });
 });
 
+describe("dodge / kargo_hp — gercek sim", () => {
+  it("en az 1 seedde dodge veya kargo_hp event (cift bot, extraCmds yok)", () => {
+    const seeds = [1, 7, 11, 42, 99, 2026];
+    const hits = [];
+    for (const seed of seeds) {
+      const s = drain(createMatch(seed, { bots: [0, 1] }));
+      const dodge = s.events.filter((e) => e.type === "dodge");
+      const kargo = s.events.filter((e) => e.type === "kargo_hp");
+      if (dodge.length + kargo.length > 0) hits.push({ seed, dodge: dodge.length, kargo: kargo.length });
+      for (const e of dodge) {
+        expect(e.unitId).toBe("scout");
+        expect(e.player === 0 || e.player === 1).toBe(true);
+      }
+      for (const e of kargo) {
+        expect(e.unitId).toBe("hauler");
+        expect(e.heal).toBeGreaterThan(0);
+        expect(e.player === 0 || e.player === 1).toBe(true);
+      }
+    }
+    expect(hits.length).toBeGreaterThan(0);
+  });
+});
+
 describe("headless Q6 — sim.place (telefon degil)", () => {
   it("n=30 olcum dolar", () => {
     const r = runHeadlessQ6({ seed: 42, n: Q6_N });

@@ -1,5 +1,17 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 14:55 TR
+Commit: (push sonrasi)
+Issue18: ACIK (kapatilmadi)
+Sim: cargoPulse heal>0 ise `kargo_hp` event; dodge zaten vardi
+Olcum: cift bot extraCmds yok — seed 1 dodge=5 kargo=1; seed 7 dodge=2; seed 99 hic
+UI: ArenaView 23505 byte (8 byte degil, geri yukleme yok)
+Play Store: yasak
+Bakis:
+test.yml yesildi; bu tur tek adim dodge/kargo_hp gercek sim.
+kargo_hp 5/40 seedde dogal; dodge 30/40.
+Sonraki tek adim: sim event hit/kill veya hauler menzil (kargo 5/40 seyrek) — CI yesil kalmali.
+
 ## Tur 2026-09-22 14:12 TR
 Commit: 996a7641a50ba1e83f4400b167daaf7470f9715d (docs; kod SHA 939b291)
 Seviye: L1olcum (ilk acik, bloklu)
