@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 06:12 TR
+Commit: 06d9b7e23bd0fa676468db757ff276aa35c37628
+Issue18: kismi
+Sim: 8 birim; interceptor delici, reaper asiri_sarj, corebreak zirh_kir
+UI: Timeout sonrasi acceptBot + bot esles butonu; seed parse live|bot
+Bakis:
+Issue 18 kopya silindi, helpers import mainde; issue kapatilmadi.
+Kuyruk 8 uygulandi: timeout otomatik bot mac (sunucu yok).
+Sonraki tek adim: Playtest olcum (telefon p95).
+Sonraki: Playtest olcum (telefon p95)
+
 ## Tur 2026-09-22 05:21 TR
 Commit: 2e55d88d6349ff0e0842eb71afc01510a5fb68a3
 Issue18: kismi
