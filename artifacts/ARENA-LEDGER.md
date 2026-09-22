@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 07:26 TR
+Commit: 7ebb5a21ee729160257cc8b3671b8b115013e931
+Issue18: kismi
+Sim: 8 birim; interceptor delici, reaper asiri_sarj, corebreak zirh_kir
+UI: Q6 touch/mouse/auto ayri; touch kayit butonu; telefon sayisi yok
+Bakis:
+Issue 18 kopya silindi, helpers import mainde; issue kapatilmadi.
+Kuyruk 10 kismi: touch kayit UI mainde; telefon p95 bilinmiyor, GECTI yok.
+Sonraki tek adim: Issue 18 basligini v11: helpers.js tek kaynak yap (kapatma).
+Sonraki: Issue 18 baslik duzelt (kapatma)
+
 ## Tur 2026-09-22 07:17 TR
 Commit: 92d046d6111da588c9d53ca15b32615614b9c3f2
 Issue18: kismi
