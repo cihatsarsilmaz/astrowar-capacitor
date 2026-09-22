@@ -24,6 +24,10 @@ function saveCups(n) {
   return v;
 }
 
+function coreHot(p) {
+  return !!p && p.satL <= 0 && p.satR <= 0 && p.coreHp > 0;
+}
+
 function hud(s) {
   const me = s.players[0], fo = s.players[1];
   return {
@@ -33,6 +37,7 @@ function hud(s) {
     hand: [...me.hand],
     me: { core: me.coreHp, satL: me.satL, satR: me.satR },
     foe: { core: fo.coreHp, satL: fo.satL, satR: fo.satR },
+    coreHot: { me: coreHot(me), foe: coreHot(fo) },
   };
 }
 
@@ -94,6 +99,14 @@ function draw(ctx, s, selected) {
       ctx.beginPath();
       ctx.arc(px, py, 12, 0, Math.PI * 2);
       ctx.fill();
+      if (tag === "C" && coreHot(p)) {
+        ctx.strokeStyle = "#facc15";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(px, py, 16, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
       ctx.fillStyle = "#f8fafc";
       ctx.font = "bold 11px sans-serif";
       ctx.fillText(tag, px - 4, py + 4);
@@ -160,7 +173,7 @@ function pointerToSim(el, e) {
 }
 
 function seedFromKey(key) {
-  const m = String(key).match(/^(?:live|bot)-(\d+)$/);
+  const m = String(key).match(/^(?:live|bot|practice|replay)-(\d+)/);
   return m ? (Number(m[1]) >>> 0) : 42;
 }
 
@@ -184,6 +197,7 @@ export default function ArenaView() {
   const [queue, setQueue] = useState(() => createQueue({ cups: cupsRef.current }));
   const [matchKey, setMatchKey] = useState("practice-42");
   const [clock, setClock] = useState("3:00");
+  const [coreOn, setCoreOn] = useState({ me: false, foe: false });
 
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   useEffect(() => { cupsRef.current = cups; }, [cups]);
@@ -214,6 +228,7 @@ export default function ArenaView() {
     setEnergy(start.energy);
     setHp({ me: start.me, foe: start.foe });
     setClock(clockText(stateRef.current));
+    setCoreOn({ me: false, foe: false });
     setDone(null);
     setReceipt(null);
     let acc = 0;
@@ -233,13 +248,16 @@ export default function ArenaView() {
         setEnergy(snap.energy);
         setHp({ me: snap.me, foe: snap.foe });
         setClock(clockText(s));
+        setCoreOn(snap.coreHot);
         if (s.phase === "done") {
           setDone(s.winner);
           const rec = buildReceipt(s, [cupsRef.current, 0]);
           setReceipt(rec);
-          const next = saveCups(rec.trophies.after[0]);
-          cupsRef.current = next;
-          setCups(next);
+          if (!String(matchKey).startsWith("replay-")) {
+            const next = saveCups(rec.trophies.after[0]);
+            cupsRef.current = next;
+            setCups(next);
+          }
         }
       }
       const ctx = canvasRef.current?.getContext("2d");
@@ -363,6 +381,14 @@ export default function ArenaView() {
     setHint(`Eslesme live seed=${seed} (lokal peer isareti — gercek rakip yok)`);
   };
 
+  const onReplay = () => {
+    const seed = (receipt?.seed ?? seedFromKey(matchKey)) >>> 0;
+    setDone(null);
+    setReceipt(null);
+    setMatchKey("replay-" + seed + "-" + Date.now());
+    setHint("Replay seed=" + seed + " (kupa yazilmaz)");
+  };
+
   const onBotFallback = () => {
     const seed = ((queue.startedAt || Date.now()) ^ (cupsRef.current * 7919)) >>> 0;
     const bot = acceptBot(queue, { seed });
@@ -405,6 +431,12 @@ export default function ArenaView() {
       <div style={{ fontSize: 12, marginBottom: 8, color: q6Touch.pass ? "#4ade80" : q6Touch.ready ? "#f87171" : "#94a3b8" }}>
         {q6Line(q6Touch, "Q6 touch")}
       </div>
+      {(coreOn.foe || coreOn.me) && (
+        <div style={{ fontSize: 12, marginBottom: 6, color: "#facc15" }}>
+          {coreOn.foe ? "Rakip cekirdek AKTIF +30% " : ""}
+          {coreOn.me ? "Senin cekirdek AKTIF +30%" : ""}
+        </div>
+      )}
       {hpRow("RAKIP", hp.foe, "#fb923c")}
       <canvas
         ref={canvasRef}
@@ -462,6 +494,7 @@ export default function ArenaView() {
         <button onClick={onLiveCancel} style={{ padding: "8px 12px", background: "#1e293b", color: "#94a3b8", border: 0, borderRadius: 8 }}>iptal</button>
         <button onClick={onLiveAcceptDemo} style={{ padding: "8px 12px", background: "#3f3f46", color: "#e4e4e7", border: 0, borderRadius: 8 }}>lokal peer</button>
         <button onClick={onBotFallback} style={{ padding: "8px 12px", background: "#7c2d12", color: "#fed7aa", border: 0, borderRadius: 8 }}>bot esles</button>
+        <button onClick={onReplay} style={{ padding: "8px 12px", background: "#4c1d95", color: "#ddd6fe", border: 0, borderRadius: 8 }}>replay seed</button>
       </div>
       {done !== null && (
         <div style={{ marginTop: 12, fontSize: 12 }}>
