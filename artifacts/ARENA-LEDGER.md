@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 07:17 TR
+Commit: 92d046d6111da588c9d53ca15b32615614b9c3f2
+Issue18: kismi
+Sim: 8 birim; interceptor delici, reaper asiri_sarj, corebreak zirh_kir
+UI: Headless Q6 `npm run arena:q6`; sim.place n=30 p50/p95 ~0ms; telefon yok
+Bakis:
+Issue 18 kopya silindi, helpers import mainde; issue kapatilmadi.
+Kuyruk 9 kismi: headless playtest yazildi; telefon p95 bilinmiyor, GECTI yok.
+Sonraki tek adim: Telefon touch Q6 kayit (kullanici, n>=30).
+Sonraki: Telefon touch Q6 kayit (kullanici, n>=30)
+
 ## Tur 2026-09-22 06:12 TR
 Commit: 06d9b7e23bd0fa676468db757ff276aa35c37628
 Issue18: kismi
