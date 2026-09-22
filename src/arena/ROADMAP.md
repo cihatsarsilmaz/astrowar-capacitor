@@ -15,4 +15,6 @@ Degil: 1.1GB native, CITV, idle win%.
 10. Telefon touch Q6 kayit — kismi (touch/mouse ayri; `touch kayit` butonu; sayi yok)
 11. Issue 18 baslik duzelt — bitti (`v11: helpers.js tek kaynak`; kapatilmadi)
 12. Issue 18 govde durum notu — bitti (snippet kirpildi; kapatilmadi)
-13. Telefon touch Q6 n>=30 rapor — sonraki (kullanici; GECTI yok)
+13. Telefon touch Q6 n>=30 rapor — bloklu (kullanici cihaz)
+14. Mac saati + OT + cift enerji HUD — bu tur
+15. Telefon touch Q6 n>=30 rapor — sonraki (kullanici)
