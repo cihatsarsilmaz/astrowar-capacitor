@@ -148,12 +148,19 @@ function botThink(state, player, delayTicks, errRate) {
   const cycle = prefer.find(id => p.hand.includes(id)); if (!cycle || UNITS[cycle].energy > p.energy) return null;
   return { tTick: state.tTick, player, type: "place", unitId: cycle, x: 0.2 + state.rng() * 0.6, y: player === 0 ? 0.18 + state.rng() * 0.25 : 0.57 + state.rng() * 0.25 };
 }
-export function createMatch(seed) { const rng = mulberry32(seed >>> 0); return { t: 0, tTick: 0, phase: "main", otStart: null, winner: null, seed: seed >>> 0, rng, players: [makePlayer(0, rng), makePlayer(1, rng)], events: [], extraCmds: [] }; }
+export function createMatch(seed, opts = {}) {
+  const rng = mulberry32(seed >>> 0);
+  const bots = Array.isArray(opts.bots) ? opts.bots.slice() : [0, 1];
+  return { t: 0, tTick: 0, phase: "main", otStart: null, winner: null, seed: seed >>> 0, rng, bots, players: [makePlayer(0, rng), makePlayer(1, rng)], events: [], extraCmds: [] };
+}
 export function step(state) {
   if (state.phase === "done") return state;
   for (const c of state.extraCmds.filter(c => c.tTick === state.tTick)) place(state, c);
-  const b0 = botThink(state, 0, 7, 0.25), b1 = botThink(state, 1, 7, 0.25);
-  if (b0) place(state, b0); if (b1) place(state, b1);
+  const sides = Array.isArray(state.bots) ? state.bots : [0, 1];
+  for (const side of sides) {
+    const cmd = botThink(state, side, 7, 0.25);
+    if (cmd) place(state, cmd);
+  }
   regenEnergy(state.players[0], state.t); regenEnergy(state.players[1], state.t);
   acquireTargets(state); moveOrHold(state); applyDamage(state, fire(state)); removeDead(state); structureRetaliate(state); removeDead(state); cargoPulse(state); checkVictory(state);
   state.t = Math.round((state.t + DT) * 1000) / 1000; state.tTick += 1; return state;
