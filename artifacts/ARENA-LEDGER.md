@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 12:22 TR
+Commit: df53d717e9e13abf168b19ac182c65e0113648d1
+Issue18: kismi
+Sim: 8 birim ayni; kacinma/kargo_hp formulsuz
+UI: buildReceipt sonrasi postArenaReceipt; url yoksa local damga
+Bakis:
+Issue 18 kopya yok; production JSX kilit; kapatilmadi.
+postArenaReceipt baglandi — sunucu damga icin __ARENA_RESOLVE_URL + token lazim.
+Sonraki tek adim: Q6 telefon playtest notu (n>=30 touch).
+Sonraki: Q6 telefon playtest notu (kullanici `npm run dev ?mode=arena`)
+
 ## Tur 2026-09-22 11:03 TR
 Commit: 231fc84223fcf979fd8efd019c1299a3a444591c
 Issue18: kismi
