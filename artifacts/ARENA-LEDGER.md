@@ -1,5 +1,16 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 07:32 TR
+Commit: 9889780c8b25a354cf89f3cd2fba75a6f77c6c64
+Issue18: kismi
+Sim: 8 birim; interceptor delici, reaper asiri_sarj, corebreak zirh_kir
+UI: Degisiklik yok (baslik turu)
+Bakis:
+Issue 18 basligi `v11: helpers.js tek kaynak`; kopya yok; issue kapatilmadi.
+Gövde eski snippet duruyor; telefon p95 bilinmiyor.
+Sonraki tek adim: Issue 18 govde durum notu (kapatma).
+Sonraki: Issue 18 govde durum notu (eski snippet kirp; kapatma)
+
 ## Tur 2026-09-22 07:26 TR
 Commit: 7ebb5a21ee729160257cc8b3671b8b115013e931
 Issue18: kismi
