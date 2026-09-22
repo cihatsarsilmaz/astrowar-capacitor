@@ -1,5 +1,22 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-23 00:18 TR
+Commit: 099ea7a (okuma HEAD; kod SHA d07b8eb / L1 939b291)
+Seviye: L1olcum (ilk acik, bloklu — kullanici cihaz)
+Denetci: BEKLE — kullanici/sunucu kapisi; kod yok; L2/L3/Issue18 kapanis yok
+Issue18: ACIK (#18 + PR #20; helpers.js extract var; production JSX kilit; gameData.js yok; 3 kapanis sarti yok; kapatilmadi)
+Sim: L1 kod 939b291; dodge/kargo_hp event test d07b8eb
+UI: ArenaView 23505 byte
+Receipt: `__ARENA_RESOLVE_URL` yok — L2 dokunulmadi
+Play Store: yasak
+Olcum: telefon Q6 n>=30 touch + 1 mac yok; headless Q6 GECTI sayilmaz
+CI: bu tur tetiklenmedi (yalniz ledger)
+Is: ledger yenileme; L1olcum kullanici adimi bekleniyor (kod yok)
+Bakis:
+Ilk acik kapi L1olcum; atlama RED.
+Bloklu kapida feature yok. Issue 18 ayri ray.
+Sonraki tek adim: telefon `npm run dev` + `/?mode=arena` n>=30 touch + 1 mac; `touch kayit` yapistir.
+
 ## Tur 2026-09-22 23:19 TR
 Commit: 055c62a (okuma HEAD; kod SHA d07b8eb / L1 939b291)
 Seviye: L1olcum (ilk acik, bloklu — kullanici cihaz)
