@@ -122,8 +122,14 @@ function draw(ctx, s, selected) {
   for (const p of s.players) {
     for (const u of p.units) {
       const [px, py] = map(u.x, u.y);
+      const def = UNITS[u.unit];
+      const maxHp = def?.hull || 1;
       ctx.fillStyle = p.side === 0 ? "#38bdf8" : "#f87171";
-      ctx.fillRect(px - 6, py - 6, 12, 12);
+      ctx.fillRect(px - 7, py - 7, 14, 14);
+      bar(ctx, px - 16, py - 16, 32, 4, u.hp / maxHp, u.hp / maxHp < 0.35 ? "#f87171" : "#4ade80", "#1e293b");
+      ctx.fillStyle = "#e2e8f0";
+      ctx.font = "9px sans-serif";
+      ctx.fillText(String(u.unit).slice(0, 4), px - 16, py + 18);
     }
   }
 
