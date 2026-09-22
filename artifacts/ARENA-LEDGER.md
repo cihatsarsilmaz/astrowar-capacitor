@@ -1,7 +1,17 @@
 # ARENA LEDGER — AstrogameWAR only
 
+## Tur 2026-09-22 16:38 TR
+Commit: (push sonrasi) docs checklist; kod yok
+Seviye: L1olcum (ilk acik, bloklu)
+Denetci: BEKLE — kullanici kapisi; sim/UI/receipt yok; Issue 18 kapatilmadi
+Is: ROADMAP seviye listesi + 5 satir telefon protokolu
+Play Store: yasak
+Bakis:
+Hedef L1olcum. Kod tekrar yazilmaz.
+Sonraki: telefon n>=30 touch + 1 mac.
+
 ## Tur 2026-09-22 15:36 TR
-Commit: d07b8eb (onceki HEAD; bu tur kod yok)
+Commit: 4eef005 (docs; onceki kod HEAD d07b8eb)
 Seviye: L1olcum (ilk acik, bloklu — kullanici cihaz)
 Denetci: BEKLE — kullanici/sunucu kapisi; kod yok; L2/L3/Issue18 kapanis yok
 Issue18: ACIK (kopya duruyor; production JSX kilit; kapanis sarti 3 yok; kapatilmadi)
