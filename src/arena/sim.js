@@ -1,5 +1,5 @@
 /** AstrogameWAR Arena sim v1 — ESM */
-const TICK_HZ = 10, DT = 0.1, MATCH_S = 180, OT_S = 60, E_MAX = 10, E_START = 5, E_PER_S = 0.35, E_DOUBLE_AT = 120, RANGE_SCALE = 0.18, SPEED_SCALE = 0.08;
+export const TICK_HZ = 10, DT = 0.1, MATCH_S = 180, OT_S = 60, E_MAX = 10, E_START = 5, E_PER_S = 0.35, E_DOUBLE_AT = 120, RANGE_SCALE = 0.18, SPEED_SCALE = 0.08;
 export const UNITS = {
   scout:       { energy: 2, atk: 50,   def: 10,  hull: 400,   speed: 3, range: 1.0, hedef: "yakin", yetenek: "kacinma" },
   interceptor: { energy: 3, atk: 90,   def: 15,  hull: 500,   speed: 4, range: 1.1, hedef: "yakin", yetenek: "delici" },
