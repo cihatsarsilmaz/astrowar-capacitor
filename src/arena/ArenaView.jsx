@@ -134,8 +134,8 @@ function pointerToSim(el, e) {
 }
 
 function seedFromKey(key) {
-  if (key.startsWith("live-") || key.startsWith("bot-")) return Number(key.slice(5)) >>> 0;
-  return 42;
+  const m = String(key).match(/^(?:live|bot)-(\d+)$/);
+  return m ? (Number(m[1]) >>> 0) : 42;
 }
 
 export default function ArenaView() {
