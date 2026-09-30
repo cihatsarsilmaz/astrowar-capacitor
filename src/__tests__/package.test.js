@@ -79,8 +79,8 @@ describe("package.json", () => {
       expect(segments[1]).toBe("astrogamewar");
     });
 
-    it("does not declare a second, conflicting registry under publishConfig", () => {
-      expect(Object.keys(pkg.publishConfig)).toEqual(["registry"]);
+    it("uses the expected registry under publishConfig", () => {
+      expect(pkg.publishConfig.registry).toBe("https://npm.pkg.github.com");
     });
   });
 });

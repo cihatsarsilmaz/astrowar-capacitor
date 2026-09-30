@@ -85,8 +85,11 @@ describe(".github/workflows/publish.yml", () => {
 
   describe("regression and boundary checks", () => {
     it("defines exactly one job in the workflow", () => {
-      const jobMatches = workflow.match(/^\s{2}publish:\s*$/gm);
+      const jobsBlock = workflow.match(/^jobs:\s*\n((?:[ \t].*(?:\n|$))*)/m);
+      expect(jobsBlock).not.toBeNull();
+      const jobMatches = jobsBlock[1].match(/^  [^ \t#][^:\n]*:\s*$/gm);
       expect(jobMatches).toHaveLength(1);
+      expect(jobMatches[0].trim()).toBe("publish:");
     });
 
     it("declares NODE_AUTH_TOKEN exactly once, scoped to a single step", () => {
