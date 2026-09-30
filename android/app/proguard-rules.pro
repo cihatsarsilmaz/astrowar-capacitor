@@ -19,3 +19,23 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Capacitor
+-keep class com.getcapacitor.** { *; }
+-keep class com.astrogamewar.app.** { *; }
+
+# WebView
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# React (if using hermes or jsc)
+-keep class com.facebook.react.** { *; }
+
+# Firebase (if used in WebView)
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
+# General
+-dontwarn android.webkit.**
+-dontwarn com.google.android.gms.**

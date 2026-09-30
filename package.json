@@ -1,19 +1,24 @@
 {
-  "name": "astrogamewar",
+  "name": "@cihatsarsilmaz/astrogamewar",
   "version": "1.0.0",
-  "private": true,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "type": "module",
   "scripts": {
-    "dev":            "vite",
-    "build":          "vite build",
-    "preview":        "vite preview",
-    "deploy:vercel":  "npm run build && npx vercel --prod",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "arena:q6": "node src/arena/playtest.js",
+    "deploy:vercel": "npm run build && npx vercel --prod",
     "deploy:netlify": "npm run build && npx netlify-cli deploy --prod --dir=dist",
-    "deploy:gh":      "npm run build && npx gh-pages -d dist",
-    "android:add":    "npx cap add android",
-    "android:sync":   "npm run build && npx cap sync android",
-    "android:open":   "npx cap open android",
-    "android:build":  "npm run android:sync && cd android && ./gradlew assembleDebug"
+    "deploy:gh": "npm run build && npx gh-pages -d dist",
+    "android:add": "npx cap add android",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:build": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -24,6 +29,7 @@
   "devDependencies": {
     "@capacitor/cli": "^6.1.2",
     "@vitejs/plugin-react": "^4.3.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "vitest": "^3.2.6"
   }
 }
