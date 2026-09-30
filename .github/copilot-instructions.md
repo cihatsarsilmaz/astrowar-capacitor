@@ -17,7 +17,7 @@ This is **AstrogameWAR**, a single-page React space strategy game packaged for A
 - **React**: Use functional components and React hooks. No class components.
 - **Styling**: Inline styles only (no CSS modules, no Tailwind). Reuse `S.*` and `T.*`.
 - **Firebase**: Always load Firebase modules via the dynamic `loadFirebase()` helper; never import Firebase at the top level (it must remain optional when config is missing).
-- **Tests**: Pure helper functions go in `src/utils/helpers.js`; add corresponding Vitest tests in `src/__tests__/`.
+- **Tests**: Pure helper functions currently live in `src/AstrogameWAR.jsx`; add corresponding Vitest tests in `src/__tests__/`.
 - **No new dependencies** without a very strong reason; the project intentionally keeps its dependency footprint minimal.
 
 ## File Locations
