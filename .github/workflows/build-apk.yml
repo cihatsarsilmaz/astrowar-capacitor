@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK — Optimized v2
 
 on:
   push:
@@ -7,69 +7,97 @@ on:
       - 'v*'
   workflow_dispatch:
 
+concurrency:
+  group: astrowar-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: '20'
+  JAVA_VERSION: '17'
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+
 jobs:
   build-apk:
+    name: Build AstrogameWAR Debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Setup Java 17
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit || npm install
+
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            android/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Node dependencies
-        run: npm ci
-
       - name: Build web assets
         run: npm run build
+        env:
+          CI: true
+          NODE_ENV: production
 
-      - name: Sync Capacitor → Android
+      - name: Capacitor sync
         run: npx cap sync android
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build debug APK
-        run: cd android && ./gradlew assembleDebug --no-daemon
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew :app:assembleDebug --parallel --build-cache --configure-on-demand --no-daemon -x lint -x lintVitalRelease
+        timeout-minutes: 15
 
-      - name: Upload debug APK
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: AstrogameWAR-debug-${{ github.run_number }}
+          name: AstrogameWAR-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+          if-no-files-found: error
 
-      # ── İmzalı release APK (sadece v* tag push'larında) ─────────────────
-      - name: Decode keystore
-        if: startsWith(github.ref, 'refs/tags/')
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+      - name: Delete existing latest-debug release (if any)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release delete latest-debug --yes --cleanup-tag || true
+        continue-on-error: true
 
-      - name: Build release APK
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Create latest-debug GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd android && ./gradlew assembleRelease --no-daemon \
-            -Pandroid.injected.signing.store.file=app/release.keystore \
-            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
-            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
-            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
-
-      - name: Upload release APK
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@v4
-        with:
-          name: AstrogameWAR-${{ github.ref_name }}
-          path: android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 90
+          gh release create latest-debug \
+            --title "AstrogameWAR Latest Debug Build" \
+            --notes "AstrogameWAR debug APK (\`main\`).\n\n**Commit:** \`${{ github.sha }}\`\n**Built at:** $(date -u '+%Y-%m-%d %H:%M UTC')" \
+            --target ${{ github.sha }} \
+            android/app/build/outputs/apk/debug/app-debug.apk

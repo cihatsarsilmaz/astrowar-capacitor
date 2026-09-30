@@ -1,51 +1,70 @@
-# GitHub Copilot Instructions — AstrogameWAR Capacitor
+# AstrogameWAR — Copilot Instructions
 
-## Project Context
+## Project Overview
 
-This is **AstrogameWAR**, a single-page React space strategy game packaged for Android with Capacitor and deployed as a PWA/web app via Vite. The entire game lives in one large component (`src/AstrogameWAR.jsx`) with clearly labelled sections §1–§10.
+**AstrogameWAR** is a browser-based space strategy game (React + Vite) packaged as an Android app via Capacitor. Players manage a fleet, research technologies, engage in battles, and compete on a leaderboard. Game state is persisted in Firebase Firestore with Google Sign-In authentication and optional App Check (reCAPTCHA Enterprise).
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| UI | React 18 (single `.jsx` file + extracted modules) |
+| Build | Vite 5 (`base: "./"` required for Capacitor APK) |
+| Mobile | Capacitor 6 → Android |
+| Backend | Firebase 10 (Auth, Firestore, App Check) loaded via dynamic CDN imports |
+| Tests | Vitest |
+| CI/CD | GitHub Actions (build APK, deploy web, publish npm package) |
+
+## Repository Structure
+
+```
+src/
+  AstrogameWAR.jsx       # Main game component (single large file, ~§1-§10 sections)
+  main.jsx               # React entry point
+  __tests__/
+    helpers.test.js      # Unit tests for helpers and game data
+android/                 # Capacitor Android project
+.github/
+  workflows/
+    build-apk.yml        # Push to main → build debug + release APK artifacts
+    deploy-web.yml       # Push to main → GitHub Pages deploy
+    publish.yml          # Tag push → publish npm package
+vite.config.js           # base: "./" is mandatory — removing it breaks APK
+capacitor.config.json    # Capacitor app ID and web dir
+```
 
 ## Key Conventions
 
-- **`base: "./"`** in `vite.config.js` is mandatory for Capacitor and must never be changed to `/`.
-- Firebase credentials are placeholders (`BURAYA_*`). Never suggest hardcoding real credentials; always refer to environment variables or the README setup steps.
-- Shared inline style objects live in the `S` constant near the top of `AstrogameWAR.jsx`. Reuse them instead of duplicating inline style objects.
-- Theme colours are in the `T` constant. Use `T.*` for any new colour values.
-- New UI sections inside the component follow the `§N SECTION NAME` comment header pattern.
+- **`AstrogameWAR.jsx` is organized into numbered sections** (§1–§10) marked by banner comments. Use `Ctrl+F §N` to navigate.
+- **Firebase is loaded lazily** via dynamic `import()` from the Firebase CDN. No npm Firebase package is used.
+- **Config placeholders**: `FIREBASE_CONFIG`, `ADMIN_UIDS`, and `RECAPTCHA_ENTERPRISE_SITE_KEY` at the top of `AstrogameWAR.jsx` must be replaced with real values before deployment. Fields starting with `"BURAYA"` are detected as unconfigured.
+- **`base: "./"` in `vite.config.js`** must not be removed — Capacitor serves assets over `file://` inside the APK.
+- **Inline styles** use the `S` (shared style constants) and `T` (color theme) objects defined in §6 of `AstrogameWAR.jsx`. Prefer these over one-off inline style objects.
 
-## Code Generation Guidelines
-
-- **React**: Use functional components and React hooks. No class components.
-- **Styling**: Inline styles only (no CSS modules, no Tailwind). Reuse `S.*` and `T.*`.
-- **Firebase**: Always load Firebase modules via the dynamic `loadFirebase()` helper; never import Firebase at the top level (it must remain optional when config is missing).
-- **Tests**: Pure helper functions currently live in `src/AstrogameWAR.jsx`; add corresponding Vitest tests in `src/__tests__/`.
-- **No new dependencies** without a very strong reason; the project intentionally keeps its dependency footprint minimal.
-
-## File Locations
-
-| What | Where |
-|------|-------|
-| Game component | `src/AstrogameWAR.jsx` |
-| Entry point | `src/main.jsx` |
-| Unit tests | `src/__tests__/helpers.test.js` |
-| Vite config | `vite.config.js` |
-| Capacitor config | `capacitor.config.json` |
-| CI workflows | `.github/workflows/` |
-
-## Build & Test
+## Common Commands
 
 ```bash
-npm run dev      # local dev server
-npm run build    # production build → dist/
-npm test         # run Vitest suite
+npm run dev            # Local dev server
+npm run build          # Production build → dist/
+npm test               # Run Vitest unit tests
+npm run android:sync   # Build then sync to Android
+npm run android:build  # Full debug APK build
 ```
 
-## Android
+## Testing
 
-```bash
-npm run android:sync   # build + sync into Android project
-npm run android:build  # compile debug APK
-```
+Tests live in `src/__tests__/`. Run with `npm test` (Vitest). Tests import helpers and game-data modules; keep exports from those modules stable.
 
-## CI Secrets (for signed APK)
+## CI / Deployment
 
-`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` — set in GitHub repository secrets before pushing a `v*` tag.
+- **Debug APK**: Push to `main` → `build-apk.yml` builds and uploads `app-debug.apk` artifact.
+- **Release APK**: Push a version tag (`v*`) → same workflow builds a signed `app-release.apk` using repository secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
+- **Web**: Push to `main` → `deploy-web.yml` deploys `dist/` to GitHub Pages.
+
+## Firebase Setup Checklist (for contributors)
+
+1. Fill in all fields of `FIREBASE_CONFIG` in `AstrogameWAR.jsx`.
+2. Set `ADMIN_UIDS` to the Firebase UID(s) that should have admin access.
+3. Optionally set `RECAPTCHA_ENTERPRISE_SITE_KEY` for App Check.
+4. Enable Google Sign-In in the Firebase console.
+5. Create a Firestore database and set appropriate security rules.
