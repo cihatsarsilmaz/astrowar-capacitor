@@ -1,10 +1,8 @@
 // Extracted from AstrogameWAR.jsx (§3 HESAPLAMA YARDIMCILARI)
-// NOTE: temporary duplication — AstrogameWAR.jsx still defines its own copies.
-// Full de-duplication is part of the v11 modularization, done incrementally
-// so the running game is never broken mid-refactor.
+// Wired via wrappers in AstrogameWAR.jsx (getRank/getNext/techMul take STAR_RANKS/TECHS).
+// production stays in JSX. Do not close issue 18 while JSX still has fmt/labDisc/storageCap copies.
 
 // STAR_RANKS and TECHS remain in the main file until gameData.js is extracted.
-// These helpers will be wired after data module lands.
 
 export const fmt = n => {
   if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";

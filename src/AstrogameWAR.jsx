@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { fmt, getRank as getRankH, getNext as getNextH, techMul as techMulH, labDisc, storageCap } from "./utils/helpers.js";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ASTROGAMEWAR v10 — ULTRA GÖRSEL EFEKTLER & ANIMASYONLAR
@@ -420,12 +421,9 @@ const SKINS = [
 ];
 
 // ══════════════════════ §3 HESAPLAMA YARDIMCILARI ═══════════════════════════
-const fmt = n => { if(n>=1e6)return(n/1e6).toFixed(1)+"M"; if(n>=1000)return(n/1000).toFixed(1)+"K"; return Math.floor(n)+""; };
-const getRank    = xp => [...STAR_RANKS].reverse().find(r=>xp>=r.min)||STAR_RANKS[0];
-const getNext    = xp => STAR_RANKS.find(r=>r.min>xp)||null;
-const techMul    = (tech,key) => { const e=TECH_BY_BONUS(key); return e?1+(tech[e[0]]||0)*e[1].per:1; };
-const labDisc    = b => Math.max(0.35,1-((b.lab||1)-1)*.10);
-const storageCap = b => ({ metal:(b.metalMine||1)*50000*Math.pow(1.4,(b.metalMine||1)-1)+(b.depot||1)*100000, crystal:(b.crystalMine||1)*20000*Math.pow(1.4,(b.crystalMine||1)-1)+(b.depot||1)*40000 });
+const getRank = xp => getRankH(xp, STAR_RANKS);
+const getNext = xp => getNextH(xp, STAR_RANKS);
+const techMul = (tech, key) => techMulH(tech, key, TECHS);
 const production = (b,planets,hero,artifacts,tech) => {
   const eB=1+((b.energyPlant||1)-1)*.05+(tech.energy||0)*.03;
   const pM=planets.reduce((s,p)=>s+(p.mB||1)-1,0);
@@ -843,7 +841,7 @@ export default function AstrogameWAR(){
   // baştan başlamasına yol açıyordu. Tek döngüde bu sorun da ortadan kalkar.
   useEffect(()=>{
     let sessionAccum = 0; // 2sn'lik tikleri biriktirip 30sn'de bir tetikler
-    const id=setInterval(()=>{
+const id=setInterval(()=>{; _intervalIds.current.push(id);
       setGs(prev=>{
         const secs=(Date.now()-prev.lastTick)/1000;
         const p=production(prev.buildings,prev.planets,prev.activeHero,prev.artifacts,prev.tech);
@@ -873,7 +871,7 @@ export default function AstrogameWAR(){
   },[gs.totalPlaySeconds]);
 
   useEffect(()=>{
-    const id=setInterval(()=>{
+const id=setInterval(()=>{; _intervalIds.current.push(id);
       setGs(prev=>{
         if(!prev.techQ.length)return prev;
         const[first,...rest]=prev.techQ;
@@ -916,7 +914,7 @@ export default function AstrogameWAR(){
 
   useEffect(()=>{
     if(!gs.autoBattle||battling)return;
-    const id=setInterval(()=>{ if(gs.autoBattle&&!bRef.current&&totalShips>0)launchBattle(); },12000);
+const id=setInterval(()=>{ if(gs.autoBattle&&!bRef.current&&totalShips>0)launchBattle(); },12000); _intervalIds.current.push(id);
     return()=>clearInterval(id);
   },[gs.autoBattle,battling,totalShips]);
 
@@ -988,7 +986,7 @@ export default function AstrogameWAR(){
     if(adWatching||adCooldown>0||adLimitReached)return;
     setAdWatching(true);setAdPct(0);
     const dur=4000,start=Date.now();
-    const tick=setInterval(()=>{
+const tick=setInterval(()=>{; _intervalIds.current.push(tick);
       const e=Date.now()-start,pct=Math.min(e/dur,1);
       setAdPct(pct);
       if(pct>=1){
@@ -1009,7 +1007,7 @@ export default function AstrogameWAR(){
   };
   useEffect(()=>{
     if(adCooldown<=0)return;
-    const id=setInterval(()=>setAdCooldown(c=>Math.max(0,c-1000)),1000);
+const id=setInterval(()=>setAdCooldown(c=>Math.max(0,c-1000)),1000); _intervalIds.current.push(id);
     return()=>clearInterval(id);
   },[adCooldown>0]);
 
@@ -1153,7 +1151,7 @@ export default function AstrogameWAR(){
     bRef.current=true;setBattle(true);setBPct(0);setReport(null);setReplay(false);
     const enemy=ENEMIES[selEnemy];
     const dur=4000,start=Date.now();
-    const tick=setInterval(()=>{
+const tick=setInterval(()=>{; _intervalIds.current.push(tick);
       if(!bRef.current){clearInterval(tick);return;}
       const e=Date.now()-start,pct=Math.min(e/dur,1);
       setBPct(pct);setBSec(Math.max(0,Math.ceil((dur-e)/1000)));
@@ -1189,7 +1187,7 @@ export default function AstrogameWAR(){
     if(stats.wins<raid.req){notify(`${raid.req} zafer gerekli!`,false);return;}
     setRaidRun(true);setRaidPct(0);setRaidResult(null);
     const dur=6000,start=Date.now();
-    const tick=setInterval(()=>{
+const tick=setInterval(()=>{; _intervalIds.current.push(tick);
       const e=Date.now()-start,pct=Math.min(e/dur,1);
       setRaidPct(pct);
       if(pct>=1){
@@ -1244,6 +1242,10 @@ export default function AstrogameWAR(){
     admin:{label:"Admin Paneli",icon:"⚙"},
   };
   const [activeGroup,setActiveGroup]=useState("empire");
+  const _intervalIds = useRef([]);
+  useEffect(()=>{
+    return ()=>{ _intervalIds.current.forEach(clearInterval); _intervalIds.current=[]; };
+  },[]);
 
   // Güvenli sekme geçişi: tab'ı ayarlarken o tab'ın ait olduğu grubu da
   // otomatik bulup activeGroup'u senkron tutar. Programatik setTab() çağrıları
