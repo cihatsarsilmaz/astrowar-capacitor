@@ -98,7 +98,7 @@ git push origin v1.0.0
 
 ## Testing
 
-Tests live in `src/__tests__/helpers.test.js` and cover the pure helper functions (`fmt`, `getRank`, `techMul`, `production`, `sc`) and game data exports (`RESEARCH_CATS`, `TECHS`, `UNITS`).
+Tests are located in `src/__tests__/helpers.test.js`; the pure helper functions (`fmt`, `getRank`, `techMul`, `production`, `sc`) and game data (`RESEARCH_CATS`, `TECHS`, `UNITS`) currently live in `src/AstrogameWAR.jsx`.
 
 ```bash
 npm test              # Run all tests
