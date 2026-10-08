@@ -15,7 +15,7 @@ const { getAuth } = require("firebase-admin/auth");
 
 initializeApp();
 
-// ─── helpers ───────────────────────────────────────────────────────────
+// ─── helpers ────────────────────────────────────────────────────────────────
 
 function cors(res) {
   res.set("Access-Control-Allow-Origin", "*");
@@ -240,7 +240,7 @@ function battle(atkFleet, defFleet, tech, form, upgrades, hero, heroes, arts, in
   return { winner, rounds, losses, crits, salvage };
 }
 
-// ─── Endpoint: GET /leaderboard ───────────────────────────────────────
+// ─── Endpoint: GET /leaderboard ─────────────────────────────────────────────
 
 exports.leaderboard = onRequest(async (req, res) => {
   cors(res);
@@ -258,6 +258,7 @@ exports.leaderboard = onRequest(async (req, res) => {
 
     const players = snap.docs.map(d => {
       const data = d.data();
+      // Only expose public fields — never expose email or auth tokens
       return {
         uid:              d.id,
         name:             data.name || "Komutan",
@@ -274,7 +275,7 @@ exports.leaderboard = onRequest(async (req, res) => {
   }
 });
 
-// ─── Endpoint: POST /saveGame ────────────────────────────────────────
+// ─── Endpoint: POST /saveGame ────────────────────────────────────────────────
 
 exports.saveGame = onRequest(async (req, res) => {
   cors(res);
@@ -290,6 +291,7 @@ exports.saveGame = onRequest(async (req, res) => {
     return;
   }
 
+  // Basic server-side sanity checks to prevent obvious cheating
   if (
     (state.resources?.metal    !== undefined && state.resources.metal    < 0) ||
     (state.resources?.crystal  !== undefined && state.resources.crystal  < 0) ||
@@ -312,7 +314,7 @@ exports.saveGame = onRequest(async (req, res) => {
   }
 });
 
-// ─── Endpoint: GET /loadGame ───────────────────────────────────────
+// ─── Endpoint: GET /loadGame ─────────────────────────────────────────────────
 
 exports.loadGame = onRequest(async (req, res) => {
   cors(res);
@@ -337,7 +339,7 @@ exports.loadGame = onRequest(async (req, res) => {
   }
 });
 
-// ─── Endpoint: POST /battle/resolve ─────────────────────────────────
+// ─── Endpoint: POST /battle/resolve ─────────────────────────────────────────
 
 exports.battleResolve = onRequest(async (req, res) => {
   cors(res);
@@ -413,6 +415,7 @@ exports.battleResolve = onRequest(async (req, res) => {
     return;
   }
 
+  // Validate fleet counts to prevent abuse (no more than 9999 of any unit)
   const validateFleet = (fleet, label) => {
     for (const [type, count] of Object.entries(fleet)) {
       if (!UNITS[type]) return `Unknown unit type in ${label}: ${type}`;
