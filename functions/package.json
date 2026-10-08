@@ -2,9 +2,9 @@
   "name": "astrogamewar-functions",
   "description": "Firebase Cloud Functions for AstrogameWAR",
   "scripts": {
-    "serve": "firebase emulators:start --only functions",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "serve": "firebase --config ../firebase.json emulators:start --only functions --project \"$FIREBASE_PROJECT_ID\"",
+    "deploy": "firebase --config ../firebase.json deploy --only functions --project \"$FIREBASE_PROJECT_ID\"",
+    "logs": "firebase --config ../firebase.json functions:log --project \"$FIREBASE_PROJECT_ID\""
   },
   "engines": {
     "node": "20"
