@@ -12,6 +12,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getAuth } = require("firebase-admin/auth");
+const { salvageForLosses } = require("./salvage.js");
 
 initializeApp();
 
@@ -85,16 +86,16 @@ const TECHS = {
 };
 
 const UNITS = {
-  lightFighter:  { atk:50,   def:10,  hull:400,   crit:.10, ability:"evasion"    },
-  smallCargo:    { atk:5,    def:10,  hull:400,   crit:.02, ability:"cargo"      },
-  heavyFighter:  { atk:150,  def:25,  hull:1000,  crit:.12, ability:"overcharge" },
-  largeCargo:    { atk:5,    def:25,  hull:1200,  crit:.02, ability:"cargo"      },
-  cruiser:       { atk:400,  def:50,  hull:2700,  crit:.12, ability:"overcharge" },
-  battleship:    { atk:1000, def:200, hull:6000,  crit:.10, ability:"volley"     },
-  battlecruiser: { atk:700,  def:400, hull:7000,  crit:.14, ability:"piercing"   },
-  destroyer:     { atk:2000, def:500, hull:11000, crit:.08, ability:"armor_break"},
-  reaper:        { atk:3500, def:500, hull:8000,  crit:.30, ability:"stealth"    },
-  deathstar:     { atk:5000, def:2000,hull:30000, crit:.20, ability:"nova"       },
+  lightFighter:  { atk:50,   def:10,  hull:400,   crit:.10, ability:"evasion",     cost:{metal:3000} },
+  smallCargo:    { atk:5,    def:10,  hull:400,   crit:.02, ability:"cargo",       cost:{metal:2000} },
+  heavyFighter:  { atk:150,  def:25,  hull:1000,  crit:.12, ability:"overcharge",  cost:{metal:6000} },
+  largeCargo:    { atk:5,    def:25,  hull:1200,  crit:.02, ability:"cargo",       cost:{metal:6000} },
+  cruiser:       { atk:400,  def:50,  hull:2700,  crit:.12, ability:"overcharge",  cost:{metal:20000} },
+  battleship:    { atk:1000, def:200, hull:6000,  crit:.10, ability:"volley",      cost:{metal:45000} },
+  battlecruiser: { atk:700,  def:400, hull:7000,  crit:.14, ability:"piercing",    cost:{metal:30000} },
+  destroyer:     { atk:2000, def:500, hull:11000, crit:.08, ability:"armor_break", cost:{metal:60000} },
+  reaper:        { atk:3500, def:500, hull:8000,  crit:.30, ability:"stealth",     cost:{metal:0} },
+  deathstar:     { atk:5000, def:2000,hull:30000, crit:.20, ability:"nova",        cost:{metal:200000} },
 };
 
 const FORMATIONS = [
@@ -233,9 +234,7 @@ function battle(atkFleet, defFleet, tech, form, upgrades, hero, heroes, arts, in
   Object.keys(atkFleet).forEach(t => {
     losses[t] = (atkFleet[t] || 0) - surv.filter(u => u.type === t).length;
   });
-  const salvage = insuranceOn
-    ? Object.entries(losses).reduce((s, [t, l]) => s + (UNITS[t]?.atk || 0) * l * 0.3, 0)
-    : 0;
+  const salvage = insuranceOn ? salvageForLosses(losses, UNITS) : 0;
 
   return { winner, rounds, losses, crits, salvage };
 }

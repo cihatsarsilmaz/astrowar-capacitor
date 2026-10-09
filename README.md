@@ -127,12 +127,13 @@ Cloud Functions require the Firebase **Blaze (pay-as-you-go)** plan.
 | `POST` | `/saveGame` | ****** | Save authenticated user's state |
 | `POST` | `/battle/resolve` | ****** | Server-side battle computation |
 
+Cloud saves are client-supplied and are not server-authoritative. Authentication limits access to a user's own save, but does not prevent that user from editing progression data.
+
 ### Deployment
 
 1. Install Firebase CLI: `npm install -g firebase-tools`
 2. Log in: `firebase login`
-3. Set your project: `firebase use YOUR_PROJECT_ID`
-4. Deploy: `firebase deploy --only functions`
+3. From `functions/`, set `FIREBASE_PROJECT_ID` to your project ID and run `npm run deploy`. The function scripts load the root `firebase.json` and use that project ID.
 
 Functions deploy automatically on push to `main` via `deploy-functions.yml`
 if the `FIREBASE_TOKEN` repository secret and `FIREBASE_PROJECT_ID` repository
