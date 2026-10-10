@@ -33,10 +33,16 @@ export class GameLoop {
       this.lastTime = now;
       this.accumulator += Math.min(Math.max(0, delta), this.interval * MAX_CATCH_UP_STEPS);
 
-      while (this.accumulator >= this.interval - 1e-9) {
+      let steps = 0;
+      while (
+        this.accumulator >= this.interval * (1 - 1e-12) &&
+        steps < MAX_CATCH_UP_STEPS
+      ) {
         this.tickCallbacks.forEach(fn => fn(this.interval));
         this.accumulator = Math.max(0, this.accumulator - this.interval);
+        steps++;
       }
+      if (steps === MAX_CATCH_UP_STEPS) this.accumulator = 0;
 
       const alpha = this.accumulator / this.interval;
       this.renderCallbacks.forEach(fn => fn(alpha));
