@@ -3,8 +3,13 @@
 // setInterval yerine RAF kullanarak %60 daha akıcı
 // ════════════════════════════════════════════════
 
+const MAX_CATCH_UP_STEPS = 5;
+
 export class GameLoop {
   constructor(fps = 60) {
+    if (!Number.isFinite(fps) || fps <= 0) {
+      throw new RangeError("fps must be a positive finite number");
+    }
     this.fps = fps;
     this.interval = 1000 / fps;
     this.lastTime = 0;
@@ -26,11 +31,11 @@ export class GameLoop {
       if (!this.running) return;
       const delta = now - this.lastTime;
       this.lastTime = now;
-      this.accumulator += delta;
+      this.accumulator += Math.min(Math.max(0, delta), this.interval * MAX_CATCH_UP_STEPS);
 
-      while (this.accumulator >= this.interval) {
+      while (this.accumulator >= this.interval - 1e-9) {
         this.tickCallbacks.forEach(fn => fn(this.interval));
-        this.accumulator -= this.interval;
+        this.accumulator = Math.max(0, this.accumulator - this.interval);
       }
 
       const alpha = this.accumulator / this.interval;

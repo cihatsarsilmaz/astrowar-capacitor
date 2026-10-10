@@ -12,6 +12,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getAuth } = require("firebase-admin/auth");
+const { isRecord, validateBattleFleet, validateGameState } = require("./validation");
 
 initializeApp();
 
@@ -285,19 +286,10 @@ exports.saveGame = onRequest(async (req, res) => {
   const decoded = await requireAuth(req, res);
   if (!decoded) return;
 
-  const { state } = req.body;
-  if (!state || typeof state !== "object") {
-    res.status(400).json({ error: "Missing or invalid state object" });
-    return;
-  }
-
-  // Basic server-side sanity checks to prevent obvious cheating
-  if (
-    (state.resources?.metal    !== undefined && state.resources.metal    < 0) ||
-    (state.resources?.crystal  !== undefined && state.resources.crystal  < 0) ||
-    (state.resources?.dm       !== undefined && state.resources.dm       < 0)
-  ) {
-    res.status(400).json({ error: "Invalid resource values" });
+  const state = req.body?.state;
+  const stateError = validateGameState(state);
+  if (stateError) {
+    res.status(400).json({ error: stateError });
     return;
   }
 
@@ -410,23 +402,14 @@ exports.battleResolve = onRequest(async (req, res) => {
 
   const { atkFleet, defFleet, tech, formation, upgrades, hero, heroes, artifacts, insuranceOn } = body;
 
-  if (!atkFleet || !defFleet || !tech) {
+  if (!isRecord(atkFleet) || !isRecord(defFleet) || !isRecord(tech)) {
     res.status(400).json({ error: "Missing required fields: atkFleet, defFleet, tech" });
     return;
   }
 
-  // Validate fleet counts to prevent abuse (no more than 9999 of any unit)
-  const validateFleet = (fleet, label) => {
-    for (const [type, count] of Object.entries(fleet)) {
-      if (!UNITS[type]) return `Unknown unit type in ${label}: ${type}`;
-      if (typeof count !== "number" || count < 0 || count > 9999)
-        return `Invalid unit count for ${type} in ${label}`;
-    }
-    return null;
-  };
-  const atkErr = validateFleet(atkFleet, "atkFleet");
+  const atkErr = validateBattleFleet(atkFleet, "atkFleet", UNITS);
   if (atkErr) { res.status(400).json({ error: atkErr }); return; }
-  const defErr = validateFleet(defFleet, "defFleet");
+  const defErr = validateBattleFleet(defFleet, "defFleet", UNITS);
   if (defErr) { res.status(400).json({ error: defErr }); return; }
 
   try {
