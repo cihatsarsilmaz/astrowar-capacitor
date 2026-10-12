@@ -30,7 +30,9 @@ function validateBattleFleet(fleet, label, units) {
 
   let total = 0;
   for (const [type, count] of Object.entries(fleet)) {
-    if (!units[type]) return `Unknown unit type in ${label}: ${type}`;
+    if (!Object.prototype.hasOwnProperty.call(units, type)) {
+      return `Unknown unit type in ${label}: ${type}`;
+    }
     if (!Number.isInteger(count) || count < 0) {
       return `Invalid unit count for ${type} in ${label}`;
     }

@@ -35,5 +35,7 @@ describe("validateBattleFleet", () => {
       /maximum size/,
     );
     expect(validateBattleFleet({ unknown: 1 }, "fleet", units)).toMatch(/Unknown unit type/);
+    expect(validateBattleFleet({ toString: 1 }, "fleet", units)).toMatch(/Unknown unit type/);
+    expect(validateBattleFleet({ constructor: 1 }, "fleet", units)).toMatch(/Unknown unit type/);
   });
 });
