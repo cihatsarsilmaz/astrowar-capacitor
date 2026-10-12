@@ -10,8 +10,12 @@ export class GameLoop {
     if (!Number.isFinite(fps) || fps <= 0) {
       throw new RangeError("fps must be a positive finite number");
     }
+    const interval = 1000 / fps;
+    if (!Number.isFinite(interval)) {
+      throw new RangeError("fps must produce a finite interval");
+    }
     this.fps = fps;
-    this.interval = 1000 / fps;
+    this.interval = interval;
     this.lastTime = 0;
     this.accumulator = 0;
     this.running = false;

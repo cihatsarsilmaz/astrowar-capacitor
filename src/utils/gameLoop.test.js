@@ -9,6 +9,7 @@ describe("GameLoop", () => {
   it("rejects invalid frame rates", () => {
     expect(() => new GameLoop(0)).toThrow(RangeError);
     expect(() => new GameLoop(Number.NaN)).toThrow(RangeError);
+    expect(() => new GameLoop(Number.MIN_VALUE)).toThrow(RangeError);
   });
 
   it("limits catch-up ticks after a long frame pause", () => {
