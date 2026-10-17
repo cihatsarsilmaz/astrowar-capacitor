@@ -40,3 +40,4 @@ android/app/release.keystore
 functions/node_modules/
 .firebase/
 .firebaserc
+.copilot-assistant/

@@ -1,0 +1,50 @@
+name: Bug Report
+description: Oyunda veya build/deploy sürecinde beklenmeyen bir hata bildir.
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Sorun Özeti
+      description: Hatanın kısa ve net özeti.
+      placeholder: "Örn: Android APK açılışta beyaz ekranda kalıyor"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Tekrarlama Adımları
+      description: Sorunu yeniden üretmek için adımlar.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Beklenen Davranış
+      description: Beklenen sonuç neydi?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Gerçekleşen Davranış
+      description: Gerçekte ne oldu?
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Ortam
+      description: İşletim sistemi, tarayıcı/cihaz, Node sürümü vb.
+      placeholder: "Android 14, Pixel 7, Node 20"
+    validations:
+      required: true
