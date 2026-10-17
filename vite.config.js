@@ -9,4 +9,9 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
   },
+  test: {
+    environment: "node",
+    include: ["src/**/*.test.js"],
+    reporters: process.env.CI ? ["dot"] : ["default"],
+  },
 });

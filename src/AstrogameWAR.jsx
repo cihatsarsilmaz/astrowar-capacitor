@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { fmt, getRank as getRankH, getNext as getNextH, techMul as techMulH, labDisc, storageCap } from "./utils/helpers.js";
+import { retry } from "./utils/retry.js";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ASTROGAMEWAR v10 — ULTRA GÖRSEL EFEKTLER & ANIMASYONLAR
@@ -246,9 +247,9 @@ async function firebaseGoogleSignIn(){
   return profile;
 }
 async function firebaseSignOut(){ const fb = await loadFirebase(); if(fb) await fb.mods.auth.signOut(fb.auth); }
-async function firebaseSaveGame(uid, state){ const fb = await loadFirebase(); if(!fb) return; await fb.mods.fs.setDoc(fb.mods.fs.doc(fb.db,"saves",uid), { state: JSON.stringify(state), updatedAt: Date.now() }); }
-async function firebaseLoadGame(uid){ const fb = await loadFirebase(); if(!fb) return null; const snap = await fb.mods.fs.getDoc(fb.mods.fs.doc(fb.db,"saves",uid)); return snap.exists() ? JSON.parse(snap.data().state) : null; }
-async function firebaseFetchAllUsers(){ const fb = await loadFirebase(); if(!fb) return []; const snap = await fb.mods.fs.getDocs(fb.mods.fs.collection(fb.db,"users")); return snap.docs.map(d=>({uid:d.id,...d.data()})); }
+async function firebaseSaveGame(uid, state){ const fb = await loadFirebase(); if(!fb) return; const ref=fb.mods.fs.doc(fb.db,"saves",uid); const data={ state: JSON.stringify(state), updatedAt: Date.now() }; await retry(()=>fb.mods.fs.setDoc(ref,data)); }
+async function firebaseLoadGame(uid){ const fb = await loadFirebase(); if(!fb) return null; const snap = await retry(()=>fb.mods.fs.getDoc(fb.mods.fs.doc(fb.db,"saves",uid))); return snap.exists() ? JSON.parse(snap.data().state) : null; }
+async function firebaseFetchAllUsers(){ const fb = await loadFirebase(); if(!fb) return []; const snap = await retry(()=>fb.mods.fs.getDocs(fb.mods.fs.collection(fb.db,"users"))); return snap.docs.map(d=>({uid:d.id,...d.data()})); }
 async function firebaseAddPlaySeconds(uid, secs){ const fb = await loadFirebase(); if(!fb) return; try{ const ref=fb.mods.fs.doc(fb.db,"users",uid); const snap=await fb.mods.fs.getDoc(ref); const cur=snap.exists()?(snap.data().totalPlaySeconds||0):0; await fb.mods.fs.setDoc(ref,{totalPlaySeconds:cur+secs},{merge:true}); }catch(e){} }
 function getAppCheckStatus(){ return _appCheckStatus; }
 
@@ -421,9 +422,9 @@ const SKINS = [
 ];
 
 // ══════════════════════ §3 HESAPLAMA YARDIMCILARI ═══════════════════════════
-const getRank    = xp => getRankH(xp, STAR_RANKS);
-const getNext    = xp => getNextH(xp, STAR_RANKS);
-const techMul    = (tech,key) => techMulH(tech, key, TECHS);
+const getRank = xp => getRankH(xp, STAR_RANKS);
+const getNext = xp => getNextH(xp, STAR_RANKS);
+const techMul = (tech, key) => techMulH(tech, key, TECHS);
 const production = (b,planets,hero,artifacts,tech) => {
   const eB=1+((b.energyPlant||1)-1)*.05+(tech.energy||0)*.03;
   const pM=planets.reduce((s,p)=>s+(p.mB||1)-1,0);

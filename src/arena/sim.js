@@ -1,11 +1,14 @@
 /** AstrogameWAR Arena sim v1 — ESM */
-const TICK_HZ = 10, DT = 0.1, MATCH_S = 180, OT_S = 60, E_MAX = 10, E_START = 5, E_PER_S = 0.35, E_DOUBLE_AT = 120, RANGE_SCALE = 0.18, SPEED_SCALE = 0.08;
+export const TICK_HZ = 10, DT = 0.1, MATCH_S = 180, OT_S = 60, E_MAX = 10, E_START = 5, E_PER_S = 0.35, E_DOUBLE_AT = 120, RANGE_SCALE = 0.18, SPEED_SCALE = 0.08;
 export const UNITS = {
-  scout:      { energy: 2, atk: 50,   def: 10,  hull: 400,   speed: 3, range: 1.0, hedef: "yakin", yetenek: "kacinma" },
-  gunship:    { energy: 4, atk: 150,  def: 25,  hull: 1000,  speed: 3, range: 1.0, hedef: "yakin", yetenek: "asiri_sarj" },
-  hauler:     { energy: 3, atk: 5,    def: 10,  hull: 400,   speed: 5, range: 0.8, hedef: "yapi",  yetenek: "kargo_hp" },
-  cruiser:    { energy: 5, atk: 400,  def: 50,  hull: 2700,  speed: 2, range: 1.4, hedef: "yakin", yetenek: "asiri_sarj" },
-  artillery:  { energy: 6, atk: 620,  def: 200, hull: 6000,  speed: 1, range: 1.8, hedef: "yapi",  yetenek: "salvo" },
+  scout:       { energy: 2, atk: 50,   def: 10,  hull: 400,   speed: 3, range: 1.0, hedef: "yakin", yetenek: "kacinma" },
+  interceptor: { energy: 3, atk: 90,   def: 15,  hull: 500,   speed: 4, range: 1.1, hedef: "yakin", yetenek: "delici" },
+  gunship:     { energy: 4, atk: 150,  def: 25,  hull: 1000,  speed: 3, range: 1.0, hedef: "yakin", yetenek: "asiri_sarj" },
+  hauler:      { energy: 3, atk: 5,    def: 10,  hull: 400,   speed: 5, range: 0.8, hedef: "yapi",  yetenek: "kargo_hp" },
+  reaper:      { energy: 4, atk: 280,  def: 20,  hull: 800,   speed: 3, range: 1.2, hedef: "yakin", yetenek: "asiri_sarj" },
+  cruiser:     { energy: 5, atk: 400,  def: 50,  hull: 2700,  speed: 2, range: 1.4, hedef: "yakin", yetenek: "asiri_sarj" },
+  artillery:   { energy: 6, atk: 620,  def: 200, hull: 6000,  speed: 1, range: 1.8, hedef: "yapi",  yetenek: "salvo" },
+  corebreak:   { energy: 7, atk: 500,  def: 80,  hull: 3500,  speed: 1, range: 1.5, hedef: "yapi",  yetenek: "zirh_kir" },
 };
 export const ARENAS = [
   { id: 1, name: "Caylak Yorunge", min: 0, max: 199 }, { id: 2, name: "Pilot Kusagi", min: 200, max: 399 },
@@ -24,7 +27,7 @@ function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; 
 function shuffle(rng, arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function makePlayer(side, rng) {
-  const deckFull = shuffle(rng, ["scout", "gunship", "hauler", "cruiser", "artillery", "scout", "gunship", "cruiser"]);
+  const deckFull = shuffle(rng, ["scout", "interceptor", "gunship", "hauler", "reaper", "cruiser", "artillery", "corebreak"]);
   return { side, energy: E_START, energySpent: 0, hand: deckFull.slice(0, 4), deck: deckFull.slice(4), discard: [], coreHp: 4200, satL: 2400, satR: 2400, units: [], nextId: 1 };
 }
 function structures(p) {
@@ -68,6 +71,7 @@ function moveOrHold(state) {
     u.x = Math.max(0.02, Math.min(0.98, u.x)); u.y = Math.max(0.02, Math.min(0.98, u.y));
   }
 }
+const SAT_MAX = 2400, CORE_MAX = 4200, KACINMA_P = 0.2, KARGO_HEAL = 8;
 function dmgFormula(atk, defv, yetenek, firedOnce, targetIsStruct) { let raw = atk; if (yetenek === "asiri_sarj" && !firedOnce) raw *= 1.15; let useDef = defv; if (yetenek === "delici") useDef *= 0.5; if (yetenek === "zirh_kir" && targetIsStruct) raw *= 1.25; if (yetenek === "salvo" && targetIsStruct) raw *= 1.10; return Math.max(1, raw - useDef * 0.25); }
 function fire(state) {
   const hits = [];
@@ -81,8 +85,43 @@ function fire(state) {
 }
 function applyDamage(state, hits) {
   for (const h of hits) {
-    if (h.tgt.type === "unit") { if (h.tgt.ref.hp > 0) h.tgt.ref.hp -= h.dmg; }
-    else { const foe = enemyOf(state, h.player); if (h.tgt.kind === "satL") foe.satL = Math.max(0, foe.satL - h.dmg); if (h.tgt.kind === "satR") foe.satR = Math.max(0, foe.satR - h.dmg); if (h.tgt.kind === "core") foe.coreHp = Math.max(0, foe.coreHp - h.dmg); }
+    if (h.tgt.type === "unit") {
+      const ref = h.tgt.ref;
+      if (!ref || ref.hp <= 0) continue;
+      if (UNITS[ref.unit].yetenek === "kacinma" && state.rng() < KACINMA_P) {
+        state.events.push({ t: state.t, type: "dodge", player: ref.side, unitId: ref.unit, id: ref.id });
+        continue;
+      }
+      ref.hp -= h.dmg;
+    } else {
+      const foe = enemyOf(state, h.player);
+      if (h.tgt.kind === "satL") foe.satL = Math.max(0, foe.satL - h.dmg);
+      if (h.tgt.kind === "satR") foe.satR = Math.max(0, foe.satR - h.dmg);
+      if (h.tgt.kind === "core") foe.coreHp = Math.max(0, foe.coreHp - h.dmg);
+    }
+  }
+}
+function cargoPulse(state) {
+  for (const p of state.players) {
+    for (const u of p.units) {
+      if (u.hp <= 0 || UNITS[u.unit].yetenek !== "kargo_hp") continue;
+      const range = UNITS[u.unit].range * RANGE_SCALE;
+      let best = null, bestD = 1e9;
+      for (const s of structures(p)) {
+        if (s.hp <= 0) continue;
+        const d = dist(u, s);
+        if (d <= range && d < bestD) { bestD = d; best = s; }
+      }
+      if (!best) continue;
+      const before = best.kind === "satL" ? p.satL : best.kind === "satR" ? p.satR : p.coreHp;
+      const cap = best.kind === "core" ? CORE_MAX : SAT_MAX;
+      const after = Math.min(cap, before + KARGO_HEAL);
+      const heal = after - before;
+      if (best.kind === "satL") p.satL = after;
+      else if (best.kind === "satR") p.satR = after;
+      else p.coreHp = after;
+      if (heal > 0) state.events.push({ t: state.t, type: "kargo_hp", player: p.side, unitId: u.unit, id: u.id, kind: best.kind, heal });
+    }
   }
 }
 function removeDead(state) { for (const p of state.players) p.units = p.units.filter(u => u.hp > 0); }
@@ -110,18 +149,25 @@ function checkVictory(state) {
 function botThink(state, player, delayTicks, errRate) {
   if (state.tTick % delayTicks !== 0 || state.rng() < errRate) return null;
   const p = state.players[player];
-  const prefer = state.t < 50 ? ["scout", "gunship", "hauler"] : state.t < 100 ? ["cruiser", "gunship", "hauler", "scout"] : ["artillery", "cruiser", "gunship", "hauler", "scout"];
+  const prefer = state.t < 50 ? ["scout", "interceptor", "gunship", "hauler"] : state.t < 100 ? ["reaper", "cruiser", "gunship", "interceptor", "hauler", "scout"] : ["corebreak", "artillery", "cruiser", "reaper", "gunship", "hauler", "scout"];
   const cycle = prefer.find(id => p.hand.includes(id)); if (!cycle || UNITS[cycle].energy > p.energy) return null;
   return { tTick: state.tTick, player, type: "place", unitId: cycle, x: 0.2 + state.rng() * 0.6, y: player === 0 ? 0.18 + state.rng() * 0.25 : 0.57 + state.rng() * 0.25 };
 }
-export function createMatch(seed) { const rng = mulberry32(seed >>> 0); return { t: 0, tTick: 0, phase: "main", otStart: null, winner: null, seed: seed >>> 0, rng, players: [makePlayer(0, rng), makePlayer(1, rng)], events: [], extraCmds: [] }; }
+export function createMatch(seed, opts = {}) {
+  const rng = mulberry32(seed >>> 0);
+  const bots = Array.isArray(opts.bots) ? opts.bots.slice() : [1];
+  return { t: 0, tTick: 0, phase: "main", otStart: null, winner: null, seed: seed >>> 0, rng, bots, players: [makePlayer(0, rng), makePlayer(1, rng)], events: [], extraCmds: [] };
+}
 export function step(state) {
   if (state.phase === "done") return state;
   for (const c of state.extraCmds.filter(c => c.tTick === state.tTick)) place(state, c);
-  const b0 = botThink(state, 0, 7, 0.25), b1 = botThink(state, 1, 7, 0.25);
-  if (b0) place(state, b0); if (b1) place(state, b1);
+  const sides = Array.isArray(state.bots) ? state.bots : [0, 1];
+  for (const side of sides) {
+    const cmd = botThink(state, side, 7, 0.25);
+    if (cmd) place(state, cmd);
+  }
   regenEnergy(state.players[0], state.t); regenEnergy(state.players[1], state.t);
-  acquireTargets(state); moveOrHold(state); applyDamage(state, fire(state)); removeDead(state); structureRetaliate(state); removeDead(state); checkVictory(state);
+  acquireTargets(state); moveOrHold(state); applyDamage(state, fire(state)); removeDead(state); structureRetaliate(state); removeDead(state); cargoPulse(state); checkVictory(state);
   state.t = Math.round((state.t + DT) * 1000) / 1000; state.tTick += 1; return state;
 }
-export function runMatch(seed) { const s = createMatch(seed); const maxTicks = (MATCH_S + OT_S) * TICK_HZ + 2; for (let i = 0; i < maxTicks && s.phase !== "done"; i++) step(s); if (s.phase !== "done") checkVictory(s); return { seed: s.seed, winner: s.winner, tEnd: s.t, core: [s.players[0].coreHp, s.players[1].coreHp], energySpent: [s.players[0].energySpent, s.players[1].energySpent] }; }
+export function runMatch(seed) { const s = createMatch(seed, { bots: [0, 1] }); const maxTicks = (MATCH_S + OT_S) * TICK_HZ + 2; for (let i = 0; i < maxTicks && s.phase !== "done"; i++) step(s); if (s.phase !== "done") checkVictory(s); return { seed: s.seed, winner: s.winner, tEnd: s.t, core: [s.players[0].coreHp, s.players[1].coreHp], energySpent: [s.players[0].energySpent, s.players[1].energySpent] }; }

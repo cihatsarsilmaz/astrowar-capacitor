@@ -135,12 +135,14 @@ Cloud Functions require the Firebase **Blaze (pay-as-you-go)** plan.
 4. Deploy: `firebase deploy --only functions`
 
 Functions deploy automatically on push to `main` via `deploy-functions.yml`
-if the `FIREBASE_TOKEN` repository secret is set:
+if the `FIREBASE_TOKEN` repository secret and `FIREBASE_PROJECT_ID` repository
+variable are set:
 
 ```bash
 # Generate token and add as GitHub secret
 firebase login:ci
 # → paste the token into: Settings → Secrets → FIREBASE_TOKEN
+# → set the project ID in: Settings → Secrets and variables → Actions → Variables → FIREBASE_PROJECT_ID
 ```
 
 ### Connecting the game client
