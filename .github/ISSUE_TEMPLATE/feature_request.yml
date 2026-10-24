@@ -1,0 +1,31 @@
+name: Feature Request
+description: Yeni özellik veya iyileştirme talebi oluştur.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Tanımı
+      description: Hangi kullanıcı problemi çözülmeli?
+      placeholder: "Şu anda ... zor/eksik çünkü ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Önerilen Çözüm
+      description: Beklediğiniz davranış veya çözüm yaklaşımı.
+      placeholder: "Öneri: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Kapsam ve Etki
+      description: Etkilenecek alanlar (UI, oyun dengesi, deploy, vb.)
+      placeholder: "UI + Firestore leaderboard"
+    validations:
+      required: true
