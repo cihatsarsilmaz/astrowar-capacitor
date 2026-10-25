@@ -12,6 +12,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getAuth } = require("firebase-admin/auth");
+const { isRecord, validateBattleFleet, validateGameState } = require("./validation");
 
 initializeApp();
 
@@ -38,31 +39,6 @@ async function requireAuth(req, res) {
     res.status(401).json({ error: "Invalid or expired token" });
     return null;
   }
-}
-
-// ─── Arena receipt (mirrors src/arena/sim.js trophy bands) ─────────────────
-
-const ARENA_BANDS = [
-  { id: 1, name: "Caylak Yorunge", min: 0, max: 199 },
-  { id: 2, name: "Pilot Kusagi", min: 200, max: 399 },
-  { id: 3, name: "Kaptan Halkasi", min: 400, max: 699 },
-  { id: 4, name: "Komutan Gecidi", min: 700, max: 1099 },
-  { id: 5, name: "Amiral Koridoru", min: 1100, max: 1599 },
-  { id: 6, name: "Galaktik Hat", min: 1600, max: 2199 },
-  { id: 7, name: "Efsane Cukuru", min: 2200, max: 2999 },
-  { id: 8, name: "Tanrisal Cekirdek", min: 3000, max: 9999 },
-];
-
-function arenaOf(t) {
-  t = Math.max(0, t);
-  return ARENA_BANDS.find(a => t >= a.min && t <= a.max) || ARENA_BANDS[7];
-}
-
-function applyArenaTrophies(winner, t0 = 0, t1 = 0) {
-  let a = t0, b = t1;
-  if (winner === 0) { a += 30; b = Math.max(0, b - 20); }
-  else if (winner === 1) { b += 30; a = Math.max(0, a - 20); }
-  return { before: [t0, t1], after: [a, b], arena: [arenaOf(a).id, arenaOf(b).id] };
 }
 
 // ─── Game data (mirrors §2-§4 of AstrogameWAR.jsx) ─────────────────────────
@@ -285,19 +261,10 @@ exports.saveGame = onRequest(async (req, res) => {
   const decoded = await requireAuth(req, res);
   if (!decoded) return;
 
-  const { state } = req.body;
-  if (!state || typeof state !== "object") {
-    res.status(400).json({ error: "Missing or invalid state object" });
-    return;
-  }
-
-  // Basic server-side sanity checks to prevent obvious cheating
-  if (
-    (state.resources?.metal    !== undefined && state.resources.metal    < 0) ||
-    (state.resources?.crystal  !== undefined && state.resources.crystal  < 0) ||
-    (state.resources?.dm       !== undefined && state.resources.dm       < 0)
-  ) {
-    res.status(400).json({ error: "Invalid resource values" });
+  const state = req.body?.state;
+  const stateError = validateGameState(state);
+  if (stateError) {
+    res.status(400).json({ error: stateError });
     return;
   }
 
@@ -352,81 +319,20 @@ exports.battleResolve = onRequest(async (req, res) => {
   const body = req.body || {};
 
   if (body.mode === "arena") {
-    const seed = Number(body.seed);
-    const winner = body.winner;
-    const tEnd = Number(body.tEnd);
-    const core = Array.isArray(body.core) ? body.core.slice(0, 2).map(Number) : null;
-    const energySpent = Array.isArray(body.energySpent)
-      ? body.energySpent.slice(0, 2).map(Number)
-      : [0, 0];
-    const trophiesBefore = Array.isArray(body.trophiesBefore)
-      ? body.trophiesBefore.slice(0, 2).map(Number)
-      : [0, 0];
-
-    if (!Number.isFinite(seed) || seed < 0) {
-      res.status(400).json({ error: "Invalid seed" });
-      return;
-    }
-    if (!(winner === 0 || winner === 1 || winner === "draw")) {
-      res.status(400).json({ error: "Invalid winner" });
-      return;
-    }
-    if (!Number.isFinite(tEnd) || tEnd < 0 || tEnd > 241) {
-      res.status(400).json({ error: "Invalid tEnd" });
-      return;
-    }
-    if (!core || core.length !== 2 || core.some(n => !Number.isFinite(n) || n < 0 || n > 4200)) {
-      res.status(400).json({ error: "Invalid core" });
-      return;
-    }
-
-    const trophies = applyArenaTrophies(
-      winner,
-      Number(trophiesBefore[0]) || 0,
-      Number(trophiesBefore[1]) || 0
-    );
-    const receipt = {
-      mode: "arena",
-      seed: seed >>> 0,
-      winner,
-      tEnd,
-      core,
-      energySpent,
-      trophies,
-      uid: decoded.uid,
-      at: Date.now(),
-    };
-
-    try {
-      const db = getFirestore();
-      const ref = await db.collection("arenaReceipts").add(receipt);
-      res.status(200).json({ ...receipt, id: ref.id });
-    } catch (err) {
-      console.error("arena receipt error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    }
+    res.status(501).json({ error: "Arena results are not verified by the server" });
     return;
   }
 
   const { atkFleet, defFleet, tech, formation, upgrades, hero, heroes, artifacts, insuranceOn } = body;
 
-  if (!atkFleet || !defFleet || !tech) {
+  if (!isRecord(atkFleet) || !isRecord(defFleet) || !isRecord(tech)) {
     res.status(400).json({ error: "Missing required fields: atkFleet, defFleet, tech" });
     return;
   }
 
-  // Validate fleet counts to prevent abuse (no more than 9999 of any unit)
-  const validateFleet = (fleet, label) => {
-    for (const [type, count] of Object.entries(fleet)) {
-      if (!UNITS[type]) return `Unknown unit type in ${label}: ${type}`;
-      if (typeof count !== "number" || count < 0 || count > 9999)
-        return `Invalid unit count for ${type} in ${label}`;
-    }
-    return null;
-  };
-  const atkErr = validateFleet(atkFleet, "atkFleet");
+  const atkErr = validateBattleFleet(atkFleet, "atkFleet", UNITS);
   if (atkErr) { res.status(400).json({ error: atkErr }); return; }
-  const defErr = validateFleet(defFleet, "defFleet");
+  const defErr = validateBattleFleet(defFleet, "defFleet", UNITS);
   if (defErr) { res.status(400).json({ error: defErr }); return; }
 
   try {
