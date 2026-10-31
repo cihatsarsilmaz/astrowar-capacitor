@@ -156,3 +156,16 @@ const CLOUD_FUNCTIONS_BASE_URL = "https://us-central1-YOUR_PROJECT_ID.cloudfunct
 When set, `saveGame`, `loadGame`, and `leaderboard` calls are routed through
 the Cloud Functions instead of direct Firestore. Leave the value as `""` to
 keep using direct Firestore (no functions deployment required).
+
+---
+
+## Firebase Actions ön kontrolü
+
+Dağıtım iş akışı `FIREBASE_TOKEN` ve `FIREBASE_PROJECT_ID` değerlerini zorunlu tutar.
+
+- Repository → **Settings → Secrets and variables → Actions → Secrets** altında `FIREBASE_TOKEN` oluştur.
+- **Variables** altında `FIREBASE_PROJECT_ID` değerini Firebase konsolundaki gerçek Project ID ile oluştur.
+- Değerlerden biri eksikse workflow dağıtım başlamadan açıklayıcı hata verir.
+- Token'ı kaynak koda, PR açıklamasına veya sohbet mesajına koyma.
+- Bu ön kontrol Firebase projesi oluşturmaz, sırrı ayarlamaz ve ücretli planı etkinleştirmez.
+- Gerçek Functions dağıtımı ayrıca operatör onayı gerektirir; ücretli Blaze planına geçiş yapılmayacaktır.
