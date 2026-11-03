@@ -123,9 +123,13 @@ Cloud Functions require the Firebase **Blaze (pay-as-you-go)** plan.
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `GET`  | `/leaderboard` | Public | Top players sorted by play time |
-| `GET`  | `/loadGame` | ****** | Load authenticated user's save |
-| `POST` | `/saveGame` | ****** | Save authenticated user's state |
-| `POST` | `/battle/resolve` | ****** | Server-side battle computation |
+| `GET`  | `/loadGame`        | Firebase ID token | Load authenticated user's save |
+| `POST` | `/saveGame`        | Firebase ID token | Save authenticated user's state |
+| `POST` | `/battle/resolve`  | Firebase ID token | Server-side battle computation |
+
+`saveGame`, kaynak değerlerini doğrular ve 900 KiB üzerindeki oyun kayıtlarını
+reddeder. Sunucu yükünü sınırlamak için `battle/resolve` her filo başına en
+fazla 250 gemi kabul eder; adetler negatif olmayan tam sayılar olmalıdır.
 
 ### Deployment
 
