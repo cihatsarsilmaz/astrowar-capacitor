@@ -16,7 +16,7 @@ permissions:
 
 env:
   NODE_VERSION: '20'
-  JAVA_VERSION: '17'
+  JAVA_VERSION: '21'
   GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit || npm install
+        run: npm ci --prefer-offline --no-audit
 
       - name: Setup Java
         uses: actions/setup-java@v4

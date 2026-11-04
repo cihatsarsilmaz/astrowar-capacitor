@@ -52,6 +52,7 @@ git push -u origin main
 
 GitHub → **Actions** sekmesine git → "Build Android APK" workflow çalışıyor →
 Tamamlanınca **Artifacts** bölümünden `app-debug.apk` indir → telefona yükle.
+Android derlemesi Capacitor 7 nedeniyle Node.js 20+, JDK 21 ve Android SDK 35 kullanır.
 
 ---
 
@@ -123,9 +124,16 @@ Cloud Functions require the Firebase **Blaze (pay-as-you-go)** plan.
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `GET`  | `/leaderboard` | Public | Top players sorted by play time |
-| `GET`  | `/loadGame` | ****** | Load authenticated user's save |
-| `POST` | `/saveGame` | ****** | Save authenticated user's state |
-| `POST` | `/battle/resolve` | ****** | Server-side battle computation |
+| `GET`  | `/loadGame` | Firebase ID token | Load authenticated user's save |
+| `POST` | `/saveGame` | Firebase ID token | Save authenticated user's state |
+| `POST` | `/battle/resolve` | Firebase ID token | Server-side battle computation |
+
+`saveGame` rejects negative or non-finite resource values and documents larger
+than 900 KiB. Battle fleets are limited to 250 units each. Client-submitted save
+progress is still not authoritative and must not be used for competitive rewards.
+Arena result receipts are not accepted by the server until match results can be
+verified server-side. Client-reported winners and trophy balances must not be
+stored as authoritative results.
 
 ### Deployment
 

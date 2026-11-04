@@ -33,8 +33,8 @@ astrowar-capacitor/
 | Layer | Tool |
 |-------|------|
 | UI framework | React 18 |
-| Build tool | Vite 5 |
-| Mobile wrapper | Capacitor 6 (Android) |
+| Build tool | Vite 6 |
+| Mobile wrapper | Capacitor 7 (Android) |
 | Backend | Firebase (Auth, Firestore, App Check) |
 | Testing | Vitest |
 | Deployment | GitHub Actions, Vercel, Netlify, GitHub Pages |
