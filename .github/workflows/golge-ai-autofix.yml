@@ -26,6 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.GOLGE_AI_TOKEN }}
           persist-credentials: true
       - name: Test autofix logic
         run: python3 -m unittest discover -s scripts/tests -p 'test_golge_ai_autofix.py' -v
@@ -33,7 +34,7 @@ jobs:
         run: python3 scripts/golge_ai_autofix.py
       - name: Open review-only pull request if changed
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GOLGE_AI_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
