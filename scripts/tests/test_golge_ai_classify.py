@@ -17,3 +17,13 @@ class ClassifierTests(unittest.TestCase):
 
     def test_unclassified(self):
         self.assertEqual(classify({"jobs": [{"conclusion": "failure", "runner_id": 1, "steps": []}]})[0], "UNCLASSIFIED_FAILURE")
+
+    def test_step_failure_reports_job_and_step(self):
+        code, detail = classify({"jobs": [{"name": "Web build", "conclusion": "failure", "runner_id": 7, "steps": [{"name": "Install", "conclusion": "success"}, {"name": "Build", "conclusion": "failure"}]}]})
+        self.assertEqual(code, "STEP_FAILURE")
+        self.assertIn("Web build / Build", detail)
+
+    def test_step_failure_missing_names(self):
+        code, detail = classify({"jobs": [{"conclusion": "failure", "runner_id": 7, "steps": [{"conclusion": "failure"}]}]})
+        self.assertEqual(code, "STEP_FAILURE")
+        self.assertIn("unnamed job / unnamed step", detail)
