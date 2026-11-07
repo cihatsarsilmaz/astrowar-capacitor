@@ -37,7 +37,7 @@ class AutofixTests(unittest.TestCase):
         self.assertEqual(after, before)
 
     def test_existing_condition_after_env_is_not_duplicated(self):
-        before = HEADER + ENV + "          KEY: value\\n" + GUARD
+        before = HEADER + ENV + "          KEY: value\n" + GUARD
         result, after = self.run_case(before)
         self.assertEqual(result.returncode, 0)
         self.assertEqual(after, before)
