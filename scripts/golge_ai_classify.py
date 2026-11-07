@@ -12,8 +12,12 @@ def classify(run):
         return "NO_FAILED_JOBS", "No failed jobs reported."
     if any(not j.get("steps") and not j.get("runner_id") for j in failures):
         return "PRE_RUNNER_FAILURE", "Job failed before runner/steps; inspect environment rules, Pages source and Actions policies."
-    if any(any(s.get("conclusion") == "failure" for s in j.get("steps", [])) for j in failures):
-        return "STEP_FAILURE", "A step failed; inspect the first failing step log."
+    for job in failures:
+        for step in job.get("steps") or []:
+            if step.get("conclusion") == "failure":
+                job_name = job.get("name") or "unnamed job"
+                step_name = step.get("name") or "unnamed step"
+                return "STEP_FAILURE", f"First reported failing step: {job_name} / {step_name}. Inspect its logs to verify root cause."
     return "UNCLASSIFIED_FAILURE", "Failed job; inspect GitHub job annotations and logs."
 
 if __name__ == "__main__":
