@@ -1,0 +1,55 @@
+name: GOLGE AI Safe Autofix
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-functions.yml'
+      - 'scripts/golge_ai_autofix.py'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: golge-ai-autofix
+  cancel-in-progress: false
+
+jobs:
+  safe-autofix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GOLGE_AI_TOKEN }}
+          persist-credentials: true
+      - name: Test autofix logic
+        run: python3 -m unittest discover -s scripts/tests -p 'test_golge_ai_autofix.py' -v
+      - name: Apply allowlisted safe CI fixes
+        run: python3 scripts/golge_ai_autofix.py
+      - name: Open review-only pull request if changed
+        env:
+          GH_TOKEN: ${{ secrets.GOLGE_AI_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No eligible changes; no pull request needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH="golge-ai/autofix-${GITHUB_RUN_ID}"
+          git switch -c "$BRANCH"
+          git add -- .github/workflows/deploy-functions.yml
+          git commit -m "fix(ci): guard Firebase validation when config is absent"
+          git push origin "$BRANCH"
+          gh pr create --base "${GITHUB_REF_NAME}" --head "$BRANCH" \
+            --title "GOLGE AI: review safe Firebase CI fix" \
+            --body "Automated allowlisted CI repair. Review before merging. No deployment performed by this workflow." \
+            --draft
