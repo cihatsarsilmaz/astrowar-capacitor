@@ -36,6 +36,12 @@ class AutofixTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertEqual(after, before)
 
+    def test_existing_condition_after_env_is_not_duplicated(self):
+        before = HEADER + ENV + "          KEY: value\\n" + GUARD
+        result, after = self.run_case(before)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(after, before)
+
     def test_unknown_structure_is_unchanged(self):
         before = HEADER + "        run: echo unexpected\n"
         result, after = self.run_case(before)
