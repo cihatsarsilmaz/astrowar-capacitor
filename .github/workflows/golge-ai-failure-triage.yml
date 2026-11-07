@@ -1,0 +1,87 @@
+name: GOLGE AI Failure Triage
+
+on:
+  workflow_run:
+    workflows:
+      - test
+      - Deploy Web
+      - Build Android APK — Optimized v2
+      - Deploy Firebase Functions
+      - GOLGE AI Safe Autofix
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: golge-triage-${{ github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  classify:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Classify failed run and report once
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            if (!run || run.repository?.full_name !== context.repo.owner + '/' + context.repo.repo) {
+              core.info('Unexpected run source; skipping.');
+              return;
+            }
+            // Never checkout or execute code from the failed workflow.
+            const { data } = await github.rest.actions.listJobsForWorkflowRun({
+              ...context.repo, run_id: run.id, per_page: 100
+            });
+            const failures = data.jobs.filter(j => j.conclusion === 'failure');
+            let code = 'NO_FAILED_JOBS';
+            if (failures.some(j => (!j.steps || j.steps.length === 0) && !j.runner_id)) {
+              code = 'PRE_RUNNER_FAILURE';
+            } else if (failures.some(j => (j.steps || []).some(s => s.conclusion === 'failure'))) {
+              code = 'STEP_FAILURE';
+            } else if (failures.length) {
+              code = 'UNCLASSIFIED_FAILURE';
+            }
+            const suggestions = {
+              PRE_RUNNER_FAILURE: 'Inspect repository Actions policies, github-pages environment approvals, and allowed deployment branches. Do not change security controls without review.',
+              STEP_FAILURE: 'Inspect the first failing step logs. Apply changes only to reviewed CI allowlisted files and require tests.',
+              UNCLASSIFIED_FAILURE: 'Inspect job annotations and runner logs; root cause is not verified.',
+              NO_FAILED_JOBS: 'Workflow failed without a failed job in the returned page; inspect the run summary.'
+            };
+            const title = '[GOLGE AI] ' + run.name + ' failure #' + run.id;
+            const body = [
+              'Automated read-only failure classification.',
+              '',
+              '- Run: ' + run.html_url,
+              '- Commit: ' + run.head_sha,
+              '- Classification: ' + code,
+              '- Suggested next step: ' + suggestions[code],
+              '',
+              'No automatic merge, deployment, or secret modification was performed.'
+            ].join('\n');
+            const { data: existing } = await github.rest.issues.listForRepo({
+              ...context.repo, state: 'all', per_page: 100
+            });
+            if (!existing.some(issue => issue.title === title)) {
+              await github.rest.issues.create({ ...context.repo, title, body });
+            }
+            for (const pr of (run.pull_requests || [])) {
+              if (pr.head?.repo?.full_name !== context.repo.owner + '/' + context.repo.repo) continue;
+              const marker = '<!-- golge-triage-run-' + run.id + ' -->';
+              const { data: comments } = await github.rest.issues.listComments({
+                ...context.repo, issue_number: pr.number, per_page: 100
+              });
+              if (!comments.some(c => c.body?.includes(marker))) {
+                await github.rest.issues.createComment({
+                  ...context.repo, issue_number: pr.number,
+                  body: marker + '\n' + body
+                });
+              }
+            }
