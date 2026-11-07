@@ -15,10 +15,14 @@ if original.count(anchor) != 1:
     print("SKIP: unexpected workflow structure")
     sys.exit(0)
 start = original.index(anchor) + len(anchor)
-if original[start:].startswith(condition):
-    print("OK: Firebase validation is correctly gated")
+next_step = original.find("      - name:", start)
+end = len(original) if next_step == -1 else next_step
+step_body = original[start:end]
+# A condition may appear after env or run; never introduce duplicate YAML keys.
+if any(line.startswith("        if:") for line in step_body.splitlines()):
+    print("OK: validation step already has a condition; no changes made")
     sys.exit(0)
-if not original[start:].startswith("        env:\n"):
+if not step_body.startswith("        env:\n"):
     print("SKIP: validation step differs from known safe pattern")
     sys.exit(0)
 path.write_text(original[:start] + condition + original[start:], encoding="utf-8")
