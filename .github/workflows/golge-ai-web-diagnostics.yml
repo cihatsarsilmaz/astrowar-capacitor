@@ -1,0 +1,39 @@
+name: GOLGE AI Web Build Diagnostics
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deploy-web.yml'
+      - '.github/workflows/golge-ai-web-diagnostics.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Build web without deployment
+        env:
+          NODE_ENV: production
+          BASE_URL: /astrowar-capacitor/
+        run: npm run build
+      - name: Verify Pages artifact inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d dist
+          test -s dist/index.html
+          echo "Web build and index.html verified; no deployment attempted."
