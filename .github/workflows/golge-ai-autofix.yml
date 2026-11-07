@@ -26,7 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GOLGE_AI_TOKEN }}
+          token: ${{ github.token }}
           persist-credentials: true
       - name: Test autofix logic
         run: python3 -m unittest discover -s scripts/tests -p 'test_golge_ai_autofix.py' -v
@@ -34,7 +34,7 @@ jobs:
         run: python3 scripts/golge_ai_autofix.py
       - name: Open review-only pull request if changed
         env:
-          GH_TOKEN: ${{ secrets.GOLGE_AI_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -44,7 +44,16 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          BRANCH="golge-ai/autofix-${GITHUB_RUN_ID}"
+          BRANCH="golge-ai/autofix-firebase-validation"
+          EXISTING="$(gh pr list --state open --head "$BRANCH" --json number --jq '.[0].number // empty')"
+          if [ -n "$EXISTING" ]; then
+            echo "Existing repair PR #$EXISTING; avoiding duplicate PR."
+            exit 0
+          fi
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "Stable repair branch already exists; manual review required."
+            exit 0
+          fi
           git switch -c "$BRANCH"
           git add -- .github/workflows/deploy-functions.yml
           git commit -m "fix(ci): guard Firebase validation when config is absent"
