@@ -41,6 +41,15 @@ jobs:
               ...context.repo, run_id: run.id, per_page: 100
             });
             const failures = data.jobs.filter(j => j.conclusion === 'failure');
+            // Keep diagnostic context aligned with scripts/golge_ai_classify.py.
+            // Names are untrusted display data, never commands or verified root causes.
+            const firstFailedStep = failures.flatMap(job =>
+              (job.steps || []).filter(step => step.conclusion === 'failure')
+                .map(step => ({ job: job.name || 'unnamed job', step: step.name || 'unnamed step' }))
+            )[0];
+            const stepContext = firstFailedStep
+              ? firstFailedStep.job + ' / ' + firstFailedStep.step
+              : 'Not available';
             let code = 'NO_FAILED_JOBS';
             if (failures.some(j => (!j.steps || j.steps.length === 0) && !j.runner_id)) {
               code = 'PRE_RUNNER_FAILURE';
@@ -62,6 +71,8 @@ jobs:
               '- Run: ' + run.html_url,
               '- Commit: ' + run.head_sha,
               '- Classification: ' + code,
+              '- First reported failing job / step: ' + stepContext,
+              '- Root cause verified: no (inspect job logs)',
               '- Suggested next step: ' + suggestions[code],
               '',
               'No automatic merge, deployment, or secret modification was performed.'
