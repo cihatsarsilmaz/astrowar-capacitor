@@ -1,0 +1,32 @@
+name: AstroWar Lockfile Repair Artifact
+
+on:
+  pull_request:
+    paths:
+      - package.json
+      - package-lock.json
+      - .github/workflows/astrowar-lockfile-check.yml
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate lockfile without running scripts
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Check package compatibility
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Upload generated lockfile for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capacitor-lockfile-${{ github.run_id }}
+          path: package-lock.json
+          retention-days: 3
