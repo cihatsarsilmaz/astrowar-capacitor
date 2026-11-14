@@ -1,0 +1,29 @@
+name: Firebase Action compatibility (no deploy)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deploy-functions.yml'
+      - '.github/workflows/firebase-action-compat.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-action-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify Firebase Action v15.34.2 Docker image exists
+        run: |
+          set -euo pipefail
+          docker manifest inspect w9jds/firebase-action:v15.34.2 > /dev/null
+          echo "Firebase Action image manifest resolved; no Firebase command executed."
+
+      - name: Verify Firebase CLI starts without credentials or deployment
+        run: |
+          set -euo pipefail
+          docker run --rm --network none --entrypoint firebase \
+            w9jds/firebase-action:v15.34.2 --version
+          echo "Firebase CLI started offline; no deployment attempted."

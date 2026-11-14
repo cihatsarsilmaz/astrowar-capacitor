@@ -10,6 +10,8 @@ permissions:
 
 jobs:
   deploy-functions:
+    # Production deployment requires an explicit manual workflow dispatch.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -73,7 +75,7 @@ jobs:
 
       - name: Deploy to Firebase
         if: steps.firebase-config.outputs.enabled == 'true'
-        uses: w9jds/firebase-action@v14.0.0
+        uses: w9jds/firebase-action@v15.34.2
         with:
           args: deploy --only functions --project "${{ vars.FIREBASE_PROJECT_ID }}"
         env:
