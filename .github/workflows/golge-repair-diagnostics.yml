@@ -71,3 +71,33 @@ jobs:
             echo 'No files were modified or pushed; no merge or deployment.'
           } >> "$GITHUB_STEP_SUMMARY"
           if [ "$failures" -gt 0 ]; then exit 1; fi
+      - name: Classify failure and propose controlled repair
+        if: always()
+        shell: bash
+        run: |
+          echo '## GOLGE AI — Controlled repair proposal' >> "$GITHUB_STEP_SUMMARY"
+          if [ ! -f /tmp/golge-evidence/status.txt ]; then
+            echo 'Diagnostics did not produce a status file; inspect runner/setup errors before proposing a fix.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          failed="$(grep -E '^[a-z]+=([1-9][0-9]*)$' /tmp/golge-evidence/status.txt | head -1 | cut -d= -f1 || true)"
+          if [ -z "$failed" ]; then
+            echo 'No failing command found. Do not create an unnecessary repair PR.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "First failed check: $failed" >> "$GITHUB_STEP_SUMMARY"
+          case "$failed" in
+            install)
+              echo 'Check package.json/package-lock.json consistency and Node compatibility. Reproduce with npm ci before proposing any lockfile change.' >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            test)
+              echo 'Identify the first failing Vitest assertion and its source. Limit changes to related source/tests; rerun npm test and build.' >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            build)
+              echo 'Identify the first Vite compilation error. Limit changes to implicated files; rerun npm test and build.' >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo 'Unclassified failure: require manual review before changes.' >> "$GITHUB_STEP_SUMMARY"
+              ;;
+          esac
+          echo 'This is advice only: no automatic code writes, PR creation, merge, deployment, or Firebase production changes.' >> "$GITHUB_STEP_SUMMARY"
