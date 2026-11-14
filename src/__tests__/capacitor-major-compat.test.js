@@ -5,7 +5,7 @@ const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.ur
 const lock = JSON.parse(readFileSync(new URL('../../package-lock.json', import.meta.url), 'utf8'));
 
 function major(spec) {
-  const match = String(spec ?? '').match(/(?:^|[^0-9])(\\d+)\\./);
+  const match = String(spec ?? '').match(/(?:^|[^0-9])(\d+)\./);
   return match ? Number(match[1]) : null;
 }
 
