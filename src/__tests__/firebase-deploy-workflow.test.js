@@ -27,6 +27,10 @@ describe("Firebase deployment workflow safeguards", () => {
       .toContain("if: steps.firebase-config.outputs.enabled == 'true'");
   });
 
+  it("requires explicit manual dispatch before deploying to production", () => {
+    expect(workflow).toContain("if: github.event_name == 'workflow_dispatch'");
+  });
+
   it("does not trigger Firebase deployment on pull requests", () => {
     expect(workflow).toContain("branches: [main]");
     expect(workflow).toContain("workflow_dispatch:");
