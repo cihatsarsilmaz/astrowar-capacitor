@@ -56,7 +56,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
+      # GitHub ubuntu-latest already provides ANDROID_HOME and Android SDK.
+      # Avoid setup-android@v3: sdkmanager exits 1 on the obsolete 'tools' package.
+      - name: Verify runner Android SDK
+        run: test -d "${ANDROID_HOME}" && test -x "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" || test -d "${ANDROID_HOME}/cmdline-tools"
       - name: Install locked dependencies
         run: npm ci
       - name: Build web assets
