@@ -30,6 +30,18 @@ repositories {
     }
 }
 
+// Align legacy Kotlin JDK extension artifacts with kotlin-stdlib 1.8.22.
+// Older transitive 1.6.21 JDK7/JDK8 jars duplicate classes now bundled in stdlib.
+configurations.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.jetbrains.kotlin' &&
+            details.requested.name in ['kotlin-stdlib-jdk7', 'kotlin-stdlib-jdk8']) {
+            details.useVersion '1.8.22'
+            details.because 'Avoid duplicate Kotlin classes in Android debug builds'
+        }
+    }
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"

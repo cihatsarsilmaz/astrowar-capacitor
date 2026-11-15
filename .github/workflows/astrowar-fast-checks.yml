@@ -1,0 +1,71 @@
+name: AstroWar Fast Checks
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/**'
+      - 'android/**'
+      - '.github/workflows/astrowar-fast-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/**'
+      - '.github/workflows/astrowar-fast-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: astro-fast-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    name: Unit tests and web build (no deploy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm test
+      - name: Build web assets (no deploy)
+        run: npm run build
+
+  android-debug-check:
+    name: Android debug build (no release or deploy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      # GitHub ubuntu-latest already provides ANDROID_HOME and Android SDK.
+      # Avoid setup-android@v3: sdkmanager exits 1 on the obsolete 'tools' package.
+      - name: Verify runner Android SDK
+        run: test -d "${ANDROID_HOME}" && test -x "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" || test -d "${ANDROID_HOME}/cmdline-tools"
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build web assets
+        run: npm run build
+      - name: Synchronize Android project
+        run: npx cap sync android
+      - name: Compile debug APK without publishing
+        working-directory: android
+        run: bash ./gradlew :app:assembleDebug --no-daemon
