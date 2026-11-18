@@ -30,6 +30,6 @@ jobs:
           ln -s "$RUNNER_TEMP/evo-playwright/node_modules/playwright" node_modules/playwright
           ln -s "$RUNNER_TEMP/evo-playwright/node_modules/playwright-core" node_modules/playwright-core
       - name: Install Chromium for test
-        run: npx playwright install --with-deps chromium
+        run: "$RUNNER_TEMP/evo-playwright/node_modules/.bin/playwright" install --with-deps chromium
       - name: Run real Chromium browser smoke
         run: node scripts/evolution-browser-smoke.mjs
