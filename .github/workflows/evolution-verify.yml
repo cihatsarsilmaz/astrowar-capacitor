@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/arena/evolution/**'
       - 'evolution.html'
+      - 'vite.evolution.config.js'
       - 'scripts/evolution-browser-smoke.mjs'
       - '.github/workflows/evolution-verify.yml'
   workflow_dispatch:
@@ -22,6 +23,7 @@ jobs:
       - run: npm ci --ignore-scripts --registry https://registry.npmjs.org
       - run: npm test
       - run: npm run build
+      - run: npx vite build --config vite.evolution.config.js
       - name: Install browser test runtime (not committed)
         run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
       - name: Install Chromium for test
