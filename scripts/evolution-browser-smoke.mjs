@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 
 const port = 4179;
-const server = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: 'pipe' });
+const server = spawn('npm', ['run', 'preview', '--', '--config', 'vite.evolution.config.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: 'pipe' });
 let browser;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function ready() {
