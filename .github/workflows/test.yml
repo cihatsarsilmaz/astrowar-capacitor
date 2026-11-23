@@ -37,3 +37,5 @@ jobs:
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_autofix.py' -v
       - name: Run GitHub Issues state adapter regression tests
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_issues_state.py' -v
+      - name: Run auto-continue queue security regression tests
+        run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_auto_continue.py' -v
