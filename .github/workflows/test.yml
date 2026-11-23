@@ -39,3 +39,5 @@ jobs:
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_issues_state.py' -v
       - name: Run auto-continue queue security regression tests
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_auto_continue.py' -v
+      - name: Run level 4 policy security tests
+        run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_level4_policy.py' -v
