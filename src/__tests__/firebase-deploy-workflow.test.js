@@ -32,7 +32,7 @@ describe("Firebase deployment workflow safeguards", () => {
   });
 
   it("does not trigger Firebase deployment on pull requests", () => {
-    expect(workflow).toContain("branches: [main]");
+    expect(workflow).not.toContain("  push:");
     expect(workflow).toContain("workflow_dispatch:");
     expect(workflow).not.toContain("  pull_request:");
   });
