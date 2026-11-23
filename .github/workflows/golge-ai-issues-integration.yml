@@ -1,0 +1,31 @@
+name: GOLGE AI Issues Integration Simulation
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/golge_ai_issues_state.py'
+      - 'scripts/tests/test_golge_ai_issues_integration.py'
+      - '.github/workflows/golge-ai-issues-integration.yml'
+
+permissions:
+  contents: read
+
+# Test-only serialization. The production writer must separately use a shared
+# concurrency group for all paths that can create incidents.
+concurrency:
+  group: golge-issues-integration-simulation
+  cancel-in-progress: false
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run isolated integration simulation
+        run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_issues_integration.py' -v
+      - name: Run adapter regression tests
+        run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_issues_state.py' -v
