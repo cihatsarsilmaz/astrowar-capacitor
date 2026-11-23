@@ -49,3 +49,5 @@ jobs:
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_github_collector.py' -v
       - name: Run GOLGE AI GitHub REST transport tests
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_github_readonly_client.py' -v
+      - name: Run GOLGE AI operation timer tests
+        run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_operation_timer.py' -v
