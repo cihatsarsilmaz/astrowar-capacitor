@@ -1,10 +1,7 @@
 name: Build Android APK — Optimized v2
 
+# Manual-only APK build; merges and tags must not publish releases.
 on:
-  push:
-    branches: [main]
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 concurrency:
@@ -12,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   NODE_VERSION: '20'
@@ -87,19 +84,3 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
           if-no-files-found: error
-
-      - name: Delete existing latest-debug release (if any)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release delete latest-debug --yes --cleanup-tag || true
-        continue-on-error: true
-
-      - name: Create latest-debug GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create latest-debug \
-            --title "AstrogameWAR Latest Debug Build" \
-            --notes "AstrogameWAR debug APK (\`main\`).\n\n**Commit:** \`${{ github.sha }}\`\n**Built at:** $(date -u '+%Y-%m-%d %H:%M UTC')" \
-            --target ${{ github.sha }} \
-            android/app/build/outputs/apk/debug/app-debug.apk

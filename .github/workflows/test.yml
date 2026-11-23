@@ -37,3 +37,5 @@ jobs:
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_autofix.py' -v
       - name: Run merge safety simulation regression tests
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_merge_safety.py' -v
+      - name: Run merge-deploy isolation regression tests
+        run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_merge_deploy_isolation.py' -v
