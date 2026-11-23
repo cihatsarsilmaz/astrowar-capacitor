@@ -77,16 +77,19 @@ jobs:
               '',
               'No automatic merge, deployment, or secret modification was performed.'
             ].join('\n');
-            const { data: existing } = await github.rest.issues.listForRepo({
+            // GitHub issues persist across workflow runs. Paginate rather than checking
+            // only the latest 100 issues, which can recreate old incident records.
+            // Fail closed on API errors: never create duplicates after a failed lookup.
+            const existing = await github.paginate(github.rest.issues.listForRepo, {
               ...context.repo, state: 'all', per_page: 100
             });
-            if (!existing.some(issue => issue.title === title)) {
+            if (!existing.some(issue => !issue.pull_request && issue.title === title)) {
               await github.rest.issues.create({ ...context.repo, title, body });
             }
             for (const pr of (run.pull_requests || [])) {
               if (pr.head?.repo?.full_name !== context.repo.owner + '/' + context.repo.repo) continue;
               const marker = '<!-- golge-triage-run-' + run.id + ' -->';
-              const { data: comments } = await github.rest.issues.listComments({
+              const comments = await github.paginate(github.rest.issues.listComments, {
                 ...context.repo, issue_number: pr.number, per_page: 100
               });
               if (!comments.some(c => c.body?.includes(marker))) {
