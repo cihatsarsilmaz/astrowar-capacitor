@@ -35,3 +35,5 @@ jobs:
           python-version: '3.11'
       - name: Run autofix unit tests
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_autofix.py' -v
+      - name: Run multi-project state regression tests
+        run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_state.py' -v
