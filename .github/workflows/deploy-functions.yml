@@ -10,25 +10,72 @@ permissions:
 
 jobs:
   deploy-functions:
+    # Production deployment requires an explicit manual workflow dispatch.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check Firebase deployment configuration
+        id: firebase-config
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+        run: |
+          missing=()
+          if [ -z "${FIREBASE_TOKEN}" ]; then
+            missing+=("FIREBASE_TOKEN secret")
+          fi
+          if [ -z "${FIREBASE_PROJECT_ID}" ]; then
+            missing+=("FIREBASE_PROJECT_ID Actions variable")
+          fi
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf 'enabled=false\n' >> "$GITHUB_OUTPUT"
+            printf '::warning title=Firebase deployment skipped::Missing %s. Configure these in repository Settings > Secrets and variables > Actions.\n' "$(IFS=', '; echo "${missing[*]}")"
+            {
+              echo "## Firebase deployment skipped"
+              echo
+              printf 'Deployment was not attempted because the following configuration is missing: **%s**.\n' "$(IFS=', '; echo "${missing[*]}")"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          printf 'enabled=true\n' >> "$GITHUB_OUTPUT"
+
       - name: Checkout
+        if: steps.firebase-config.outputs.enabled == 'true'
         uses: actions/checkout@v4
 
+      - name: Validate Firebase deployment configuration
+        if: steps.firebase-config.outputs.enabled == 'true'
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "::error::Set the FIREBASE_TOKEN Actions secret before deploying Functions."
+            exit 1
+          fi
+          if [ -z "$FIREBASE_PROJECT_ID" ]; then
+            echo "::error::Set the FIREBASE_PROJECT_ID Actions variable before deploying Functions."
+            exit 1
+          fi
+
       - name: Setup Node.js
+        if: steps.firebase-config.outputs.enabled == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: functions/package-lock.json
 
       - name: Install function dependencies
+        if: steps.firebase-config.outputs.enabled == 'true'
         working-directory: functions
-        run: npm install
+        run: npm ci
 
       - name: Deploy to Firebase
-        uses: w9jds/firebase-action@v14.0.0
+        if: steps.firebase-config.outputs.enabled == 'true'
+        uses: w9jds/firebase-action@v15.34.2
         with:
           args: deploy --only functions --project "${{ vars.FIREBASE_PROJECT_ID }}"
         env:
