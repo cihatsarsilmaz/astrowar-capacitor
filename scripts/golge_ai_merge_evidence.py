@@ -98,16 +98,49 @@ def collect(api, owner, repo, number):
             and "pull_request" not in issue for issue in issues
         )
 
-    # Verify exact PR head SHA, not stale checks from an older commit.
+    # GitHub's Checks REST endpoint returns {total_count, check_runs}.
+    # Only named branch-protection requirements may pass; no success inferred
+    # from an empty check set, stale SHA, or partial pagination.
     sha = evidence["head_sha"]
-    if sha:
-        checks = pages(root + "/commits/" + sha + "/check-runs")
-        if isinstance(checks, list):
-            # Some clients return an object for check-runs; this adapter deliberately
-            # fails closed until a normalized, audited client is provided.
-            errors.append("check_runs_unexpected_schema")
-        else:
+    if sha and evidence["branch_protection_verified"]:
+        required = protection["required_status_checks"]
+        names = set(required.get("contexts") or [])
+        names.update(item.get("context") for item in (required.get("checks") or [])
+                     if isinstance(item, dict) and isinstance(item.get("context"), str))
+        collected = []
+        complete = False
+        for page in range(1, 51):
+            response = read(root + "/commits/" + sha +
+                            "/check-runs?per_page=100&page=" + str(page))
+            if not isinstance(response, dict) or not isinstance(response.get("check_runs"), list) or not isinstance(response.get("total_count"), int):
+                errors.append("checks_unverified")
+                break
+            batch = response["check_runs"]
+            if any(not isinstance(item, dict) for item in batch):
+                errors.append("checks_unverified")
+                break
+            collected.extend(batch)
+            if len(batch) < 100:
+                complete = len(collected) == response["total_count"]
+                break
+        if not complete:
             errors.append("checks_unverified")
+        else:
+            latest = {}
+            for item in collected:
+                name = item.get("name")
+                if isinstance(name, str) and item.get("head_sha") == sha:
+                    if name not in latest or str(item.get("started_at") or "") > str(latest[name].get("started_at") or ""):
+                        latest[name] = item
+            evidence["checks_commit_sha"] = sha
+            evidence["required_checks_passed"] = bool(names) and all(
+                name in latest and latest[name].get("status") == "completed" and
+                latest[name].get("conclusion") == "success" for name in names
+            )
+            if not evidence["required_checks_passed"]:
+                errors.append("required_checks_missing_or_failed")
+    else:
+        errors.append("checks_unverified")
 
     # External deploy hooks cannot be proven absent from these endpoints.
     errors.append("external_deploy_hooks_unverified")
