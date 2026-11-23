@@ -40,7 +40,8 @@ class EvidenceAdapterTests(unittest.TestCase):
         self.assertTrue(evidence["branch_protection_verified"])
         self.assertTrue(evidence["independent_review_verified"])
         self.assertFalse(evidence["stop_switch"])
-        self.assertTrue(evidence["required_checks_passed"])\n        self.assertEqual(evidence["checks_commit_sha"], "abc")
+        self.assertTrue(evidence["required_checks_passed"])
+        self.assertEqual(evidence["checks_commit_sha"], "abc")
 
     def test_403_denies_and_does_not_merge(self):
         result = evaluate(FakeAPI(denied=True), "cihatsarsilmaz",

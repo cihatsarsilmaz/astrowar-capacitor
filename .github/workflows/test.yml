@@ -43,3 +43,5 @@ jobs:
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_merge_integrated.py' -v
       - name: Run read-only GitHub merge evidence adapter tests
         run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_merge_evidence.py' -v
+      - name: Run GOLGE AI operation ledger regression tests
+        run: python -m unittest discover -s scripts/tests -p 'test_golge_ai_operation_ledger.py' -v
