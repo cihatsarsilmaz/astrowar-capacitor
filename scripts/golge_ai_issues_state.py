@@ -51,7 +51,7 @@ class IssuesLedger:
 
     def record_once(self, project, event, reference=""):
         key = incident_key(project, event)
-        if not isinstance(reference, str) or not re.fullmatch(r"https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(actions/runs|issues|pull)/[0-9]+", reference):
+        if not isinstance(reference, str) or not re.fullmatch(r"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(actions/runs|issues|pull)/[0-9]+", reference):
             raise ValueError("Reference must be a GitHub run, issue or PR URL")
         title = PREFIX + key
         existing = self._find(title)
