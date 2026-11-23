@@ -30,7 +30,7 @@ class FakeAPI:
         if path.startswith(BASE + "/issues?"):
             return []
         if "/check-runs?" in path:
-            return {"check_runs": []}
+            return {"total_count": 1, "check_runs": [{"name": "vitest", "head_sha": "abc", "status": "completed", "conclusion": "success", "started_at": "2026-11-23T00:00:00Z"}]}
         raise AssertionError("Unexpected API call " + path)
 
 
@@ -40,7 +40,7 @@ class EvidenceAdapterTests(unittest.TestCase):
         self.assertTrue(evidence["branch_protection_verified"])
         self.assertTrue(evidence["independent_review_verified"])
         self.assertFalse(evidence["stop_switch"])
-        self.assertIn("checks_unverified", errors)
+        self.assertTrue(evidence["required_checks_passed"])\n        self.assertEqual(evidence["checks_commit_sha"], "abc")
 
     def test_403_denies_and_does_not_merge(self):
         result = evaluate(FakeAPI(denied=True), "cihatsarsilmaz",
@@ -68,6 +68,58 @@ class EvidenceAdapterTests(unittest.TestCase):
     def test_integrated_local_isolation_fixed(self):
         from scripts.golge_ai_merge_integrated import workflow_isolation
         self.assertEqual(workflow_isolation(ROOT), [])
+
+    def test_stale_sha_check_is_rejected(self):
+        class Stale(FakeAPI):
+            def get(self, path):
+                value = super().get(path)
+                if "/check-runs?" in path:
+                    value["check_runs"][0]["head_sha"] = "old"
+                return value
+        evidence, errors = collect(Stale(), "cihatsarsilmaz", "astrowar-capacitor", 12)
+        self.assertFalse(evidence["required_checks_passed"])
+        self.assertIn("required_checks_missing_or_failed", errors)
+
+    def test_failed_required_check_is_rejected(self):
+        class Failed(FakeAPI):
+            def get(self, path):
+                value = super().get(path)
+                if "/check-runs?" in path:
+                    value["check_runs"][0]["conclusion"] = "failure"
+                return value
+        evidence, errors = collect(Failed(), "cihatsarsilmaz", "astrowar-capacitor", 12)
+        self.assertFalse(evidence["required_checks_passed"])
+        self.assertIn("required_checks_missing_or_failed", errors)
+
+    def test_incomplete_check_pagination_denied(self):
+        class Incomplete(FakeAPI):
+            def get(self, path):
+                value = super().get(path)
+                if "/check-runs?" in path:
+                    value["total_count"] = 2
+                return value
+        evidence, errors = collect(Incomplete(), "cihatsarsilmaz", "astrowar-capacitor", 12)
+        self.assertFalse(evidence["required_checks_passed"])
+        self.assertIn("checks_unverified", errors)
+
+    def test_self_review_not_independent(self):
+        class SelfReview(FakeAPI):
+            def get(self, path):
+                if "/reviews?" in path:
+                    return [{"user": {"login": "author"}, "state": "APPROVED"}]
+                return super().get(path)
+        evidence, _ = collect(SelfReview(), "cihatsarsilmaz", "astrowar-capacitor", 12)
+        self.assertFalse(evidence["independent_review_verified"])
+
+    def test_review_dismissal_revokes_approval(self):
+        class Dismissed(FakeAPI):
+            def get(self, path):
+                if "/reviews?" in path:
+                    return [{"user": {"login": "reviewer"}, "state": "APPROVED"},
+                            {"user": {"login": "reviewer"}, "state": "DISMISSED"}]
+                return super().get(path)
+        evidence, _ = collect(Dismissed(), "cihatsarsilmaz", "astrowar-capacitor", 12)
+        self.assertFalse(evidence["independent_review_verified"])
 
 
 if __name__ == "__main__":
