@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GÖLGE AI | Salt Okunur Süre Paneli</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#101827;color:#f1f5f9}
+body{max-width:760px;margin:32px auto;padding:16px}
+h1{font-size:1.6rem}.muted{color:#aab8ca}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{background:#1d2b40;border:1px solid #40526a;border-radius:16px;padding:20px}
+.value{font-size:2.6rem;font-variant-numeric:tabular-nums;font-weight:700}
+.status{font-weight:700}input{max-width:100%;box-sizing:border-box;width:100%;padding:10px;background:#111d2e;color:white;border:1px solid #68788b;border-radius:8px}
+button{padding:12px;background:#4c79ff;border:0;color:white;border-radius:8px;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #a5b4fc}
+footer{margin-top:20px}
+</style>
+</head>
+<body>
+<h1>GÖLGE AI · Operasyon Süreleri</h1>
+<p class="muted">Yerel önizleme. GitHub bağlantısı veya sürekli yürütücü değildir. Hiçbir işlem otomatik onaylanmaz.</p>
+<section class="card" aria-label="Oturum zamanı">
+<label for="started">Doğrulanmış başlangıç zamanı (ISO 8601, saat dilimi zorunlu)</label>
+<input id="started" placeholder="2026-11-23T03:00:00Z" aria-describedby="help">
+<p id="help" class="muted">Zamanı güvenilir operasyon kaydından elle girin. Bu alan doğrulama kanıtı değildir.</p>
+<label><input id="stop" type="checkbox" style="width:auto"> STOP aktif (yerel görünüm)</label>
+<p><button id="apply" type="button">Sayacı göster</button></p>
+<p id="status" class="status" role="status" aria-live="polite">Başlangıç zamanı girilmedi.</p>
+</section>
+<div class="grid" style="margin-top:16px">
+<section class="card"><h2>Bekleme · 10 dk</h2><div class="value" id="wait">--:--</div><p class="muted">Kalan süre</p></section>
+<section class="card"><h2>Denetim · 15 dk</h2><div class="value" id="review">--:--</div><p class="muted">Kalan süre</p></section>
+</div>
+<footer class="muted">Yalnızca gösterim. STOP işareti sunucuya gönderilmez. Birleştirme, dağıtım ve otomatik onay kapalıdır.</footer>
+<script type="module" src="./operation-timer-panel.js"></script>
+</body>
+</html>
