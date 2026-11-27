@@ -1,0 +1,65 @@
+name: GOLGE AI Level 4 Delayed Diagnostic Review
+
+# GitHub cron runs on the default branch only, after separate merge approval.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: golge-level4-review-single-writer
+  cancel-in-progress: false
+
+jobs:
+  review-queued-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Apply level 4 policy to pending queue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const repo = context.repo;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              ...repo, state: 'open', per_page: 100
+            });
+            // A manually created issue with this exact title stops all processing.
+            if (issues.some(i => !i.pull_request &&
+                i.title === '[GOLGE AI STOP]')) {
+              core.info('STOP switch is active; no task processed.');
+              return;
+            }
+            const now = Date.now();
+            const marker = '<!-- golge-level4-reviewed-v1 -->';
+            // Deliberately process at most one reviewed diagnostic per run.
+            const task = issues.find(i => !i.pull_request &&
+              i.title === '[GOLGE AI QUEUE] review-issues-ledger-integration-v1' &&
+              (i.body || '').includes('<!-- golge-safe-task:review-issues-ledger-integration-v1 -->') &&
+              now - Date.parse(i.created_at) >= 10 * 60 * 1000);
+            if (!task) {
+              core.info('No eligible queued diagnostic after 10 minute delay.');
+              return;
+            }
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...repo, issue_number: task.number, per_page: 100
+            });
+            if (comments.some(c => (c.body || '').includes(marker))) {
+              core.info('Diagnostic already reviewed; no duplicate comment.');
+              return;
+            }
+            // No command execution: record policy evaluation only.
+            await github.rest.issues.createComment({
+              ...repo, issue_number: task.number,
+              body: [
+                marker,
+                'GOLGE AI level 4: eligible for read-only diagnostic review.',
+                'Policy: trusted static task, minimum 10 minute delay, stop switch absent.',
+                'Status: queued for human-readable review; not an approval to modify code.',
+                'Blocked: code edits, merge, deployment, billing, secrets and permission changes.'
+              ].join('\n')
+            });
+            core.info('Recorded diagnostic policy decision; no code executed.');
