@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: "node",
-      include: ["src/**/*.test.js"],
+      include: ["src/**/*.test.js", "scripts/golge_ai_panel/operation-timer-panel.test.js"],
       reporters: process.env.CI ? ["dot"] : ["default"],
     },
   };

@@ -11,6 +11,15 @@ export function parseStart(value) {
       !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) {
     throw new Error('Saat dilimli ISO 8601 zamanı gerekli');
   }
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(5, 7));
+  const day = Number(value.slice(8, 10));
+  const hour = Number(value.slice(11, 13));
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (year === 0 || !(day >= 1 && day <= daysInMonth[month - 1]) || hour >= 24) {
+    throw new Error('Geçersiz tarih');
+  }
   const parsed = Date.parse(value);
   if (!Number.isFinite(parsed)) throw new Error('Geçersiz tarih');
   return parsed;

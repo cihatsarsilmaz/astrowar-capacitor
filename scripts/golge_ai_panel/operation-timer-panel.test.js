@@ -34,6 +34,12 @@ describe('GOLGE AI offline timer panel', () => {
     expect(() => parseStart('2026-11-23T03:00:00')).toThrow();
   });
 
+  it('rejects impossible dates and accepts leap day', () => {
+    expect(() => parseStart('2026-02-30T03:00:00Z')).toThrow();
+    expect(() => parseStart('2026-11-23T24:00:00Z')).toThrow();
+    expect(parseStart('2028-02-29T06:00:00+03:00')).toBe(Date.UTC(2028, 1, 29, 3));
+  });
+
   it('rejects future start', () => {
     expect(() => remainingSeconds(start, start - 1, 600)).toThrow();
   });
